@@ -1,0 +1,46 @@
+# 1) Dependências e gerenciador
+/vendor/
+/composer.phar
+
+# 2) Diretórios de cache/runtime e assets gerados
+/backend/runtime/
+/frontend/runtime/
+/common/runtime/
+/console/runtime/
+/backend/web/assets/
+/frontend/web/assets/
+
+# 3) Configurações locais (não versionar suas credenciais)
+/common/config/main-local.php
+/backend/config/main-local.php
+/frontend/config/main-local.php
+
+# 4) Arquivos de ambiente
+.env
+.env.*.local
+
+# 5) Node.js (se usar npm/Yarn/Webpack)
+/node_modules/
+/yarn-error.log
+npm-debug.log*
+
+# 6) Logs e geração de coverage
+*.log
+coverage/
+tests/_output/
+tests/runtime/
+
+# 7) Arquivos de IDEs/editors
+/.idea/
+/.vscode/
+/nbproject/
+/*.sublime-*
+
+# 8) Arquivos temporários de sistema
+*.DS_Store
+Thumbs.db
+*.tmp
+
+# 9) Outras caches e builds
+/.sass-cache/
+/*.cache
