@@ -7,6 +7,9 @@ use backend\models\UsuariosSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\filters\AccessControl;
+use sizeg\jwt\JwtHttpBearerAuth;
+use Yii;
 
 /**
  * UsuariosController implements the CRUD actions for Usuarios model.
@@ -18,17 +21,46 @@ class UsuariosController extends Controller
      */
     public function behaviors()
     {
-        return array_merge(
-            parent::behaviors(),
-            [
-                'verbs' => [
-                    'class' => VerbFilter::className(),
-                    'actions' => [
-                        'delete' => ['POST'],
-                    ],
+        $behaviors = parent::behaviors();
+
+        // 1) JWT Bearer Auth para todas as ações
+        $behaviors['authenticator'] = [
+            'class' => JwtHttpBearerAuth::class,
+        ];
+
+        // 2) Controle de acesso: apenas usuários logados, e regras por ação
+        $behaviors['access'] = [
+            'class' => AccessControl::class,
+            'rules' => [
+                // qualquer usuário autenticado pode criar (pedido ou doação)
+                [
+                    'allow'   => true,
+                    'actions' => ['create'],
+                    'roles'   => ['@'],
                 ],
-            ]
-        );
+                // só trabalhador/admin pode index/view/update/delete/resposta/aprovar
+                [
+                    'allow'   => true,
+                    'actions' => ['index', 'view', 'update', 'delete', 'resposta', 'aprovar'],
+                    'matchCallback' => function ($rule, $action) {
+                        $u = Yii::$app->user->identity;
+                        return $u->isTrabalhador() || $u->isAdmin();
+                    },
+                ],
+            ],
+        ];
+
+        // 3) VerbFilter para métodos HTTP
+        $behaviors['verbs'] = [
+            'class'   => VerbFilter::class,
+            'actions' => [
+                'delete'   => ['POST'],
+                'resposta' => ['POST'],
+                'aprovar'  => ['POST'],
+            ],
+        ];
+
+        return $behaviors;
     }
 
     /**

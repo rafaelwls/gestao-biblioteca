@@ -161,6 +161,22 @@ class Usuarios extends \yii\db\ActiveRecord
                 ['multa_paga' => false, ['>', 'multa_calculada', 0]]
             ])->exists();
     }
+    
+    /**
+     * @return bool se o usuário é administrador
+     */
+    public function isAdmin(): bool
+    {
+        return (bool)$this->is_admin;
+    }
+
+    /**
+     * @return bool se o usuário é trabalhador
+     */
+    public function isTrabalhador(): bool
+    {
+        return (bool)$this->is_trabalhador;
+    }
 
     /**
      * Verifica se o usuário pode pegar mais um empréstimo.

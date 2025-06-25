@@ -19,43 +19,46 @@ class DoacoesController extends Controller
      */
     public function behaviors()
     {
-        $behaviors = [
-            // JWT authentication
-            'authenticator' => [
-                'class' => JwtHttpBearerAuth::class,
-            ],
-            // Access control
-            'access' => [
-                'class' => AccessControl::class,
-                'rules' => [
-                    // any user can create a donation request
-                    [
-                        'allow'   => true,
-                        'actions' => ['create'],
-                        'roles'   => ['@'],
-                    ],
-                    // only worker or admin can index/view/approve/update/delete
-                    [
-                        'allow'   => true,
-                        'actions' => ['index', 'view', 'aprovar', 'update', 'delete'],
-                        'matchCallback' => function ($rule, $action) {
-                            $u = Yii::$app->user->identity;
-                            return $u->isTrabalhador() || $u->isAdmin();
-                        },
-                    ],
+        $behaviors = parent::behaviors();
+
+        // 1) JWT Bearer Auth para todas as ações
+        $behaviors['authenticator'] = [
+            'class' => JwtHttpBearerAuth::class,
+        ];
+
+        // 2) Controle de acesso: apenas usuários logados, e regras por ação
+        $behaviors['access'] = [
+            'class' => AccessControl::class,
+            'rules' => [
+                // qualquer usuário autenticado pode criar (pedido ou doação)
+                [
+                    'allow'   => true,
+                    'actions' => ['create'],
+                    'roles'   => ['@'],
                 ],
-            ],
-            // Verb filter
-            'verbs' => [
-                'class'   => VerbFilter::class,
-                'actions' => [
-                    'delete'  => ['POST'],
-                    'aprovar' => ['POST'],
+                // só trabalhador/admin pode index/view/update/delete/resposta/aprovar
+                [
+                    'allow'   => true,
+                    'actions' => ['index', 'view', 'update', 'delete', 'resposta', 'aprovar'],
+                    'matchCallback' => function ($rule, $action) {
+                        $u = Yii::$app->user->identity;
+                        return $u->isTrabalhador() || $u->isAdmin();
+                    },
                 ],
             ],
         ];
 
-        return array_merge(parent::behaviors(), $behaviors);
+        // 3) VerbFilter para métodos HTTP
+        $behaviors['verbs'] = [
+            'class'   => VerbFilter::class,
+            'actions' => [
+                'delete'   => ['POST'],
+                'resposta' => ['POST'],
+                'aprovar'  => ['POST'],
+            ],
+        ];
+
+        return $behaviors;
     }
 
     /**
