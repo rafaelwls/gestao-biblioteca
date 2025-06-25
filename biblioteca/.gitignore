@@ -11,9 +11,9 @@
 /frontend/web/assets/
 
 # 3) Configurações locais (não versionar suas credenciais)
-/common/config/main-local.php
-/backend/config/main-local.php
-/frontend/config/main-local.php
+# /common/config/main-local.php
+# /backend/config/main-local.php
+# /frontend/config/main-local.php
 
 # 4) Arquivos de ambiente
 .env
