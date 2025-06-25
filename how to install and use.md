@@ -3,11 +3,11 @@
 Instale o Xampp
 
 instale o composer ou já tenha baixado:
-composer --version
+```composer --version```
 https://getcomposer.org/download/
 
 Tenha o git baixado e no path 
-git --version
+```git --version```
 https://git-scm.com/download/win
 
 depois de instalar o xampp
@@ -56,5 +56,4 @@ Rode o apache no xampp
 Links de acesso:
 biblioteca.local
 admin.biblioteca.local
-
--- composer create-project --prefer-dist yiisoft/yii2-app-advanced biblioteca
+ 
