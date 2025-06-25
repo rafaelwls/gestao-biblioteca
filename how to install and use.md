@@ -31,6 +31,7 @@ cd C:\xampp\htdocs\gestao-biblioteca\biblioteca
 e rode
 ```
 composer install
+composer require vlucas/phpdotenv
 ```
 
 Crie um banco no postgresql com o nome de yii2advanced
@@ -45,7 +46,13 @@ abra:
 ```
 C:\Windows\System32\drivers\etc\hosts
 ```
-
+crie um .env:
+```
+DB_DSN="pgsql:host=localhost;dbname=yii2advanced"
+DB_USER="postgres"
+DB_PASS="123"
+SECRET_KEY="a3f5c12d4e6b7a8c9d0e1f2a3b4c5d6e"
+```
 aplique o comando no final do arquivo e salve: 
 ```
 127.0.0.1 biblioteca.local
