@@ -16,3 +16,5 @@ cd /d C:\xampp\htdocs
 
 e rode
 composer create-project --prefer-dist yiisoft/yii2-app-advanced biblioteca
+
+LEMBRAR DE DESCOMENTAR O .GITIGNORE DO main-local.php
