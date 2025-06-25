@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use yii\db\Expression;
 use Yii;
 
 /**
@@ -131,4 +132,42 @@ class Usuarios extends \yii\db\ActiveRecord
         return $this->hasMany(Vendas::class, ['usuario_id' => 'id']);
     }
 
+    /**
+     * Conta quantos empréstimos ativos o usuário tem.
+     * @return int
+     */
+    public function getActiveLoanCount(): int
+    {
+        return Emprestimos::find()
+            ->where(['usuario_id' => $this->id, 'data_devolucao_real' => null])
+            ->count();
+    }
+
+    /**
+     * Verifica se existe algum débito pendente (empréstimo atrasado ou multa não paga).
+     * @return bool
+     */
+    public function hasPendingDebt(): bool
+    {
+        return Emprestimos::find()
+            ->where(['usuario_id' => $this->id])
+            ->andWhere([
+                'or',
+                [
+                    'and',
+                    ['<', 'data_prevista_devolucao', new Expression('CURRENT_DATE')],
+                    ['data_devolucao_real' => null]
+                ],
+                ['multa_paga' => false, ['>', 'multa_calculada', 0]]
+            ])->exists();
+    }
+
+    /**
+     * Verifica se o usuário pode pegar mais um empréstimo.
+     * Exemplo de limite: 5 livros.
+     */
+    public function canBorrow(int $limit = 5): bool
+    {
+        return !$this->hasPendingDebt() && $this->getActiveLoanCount() < $limit;
+    }
 }
