@@ -16,8 +16,8 @@
 # /frontend/config/main-local.php
 
 # 4) Arquivos de ambiente
-.env
-.env.*.local
+# .env
+# .env.*.local
 
 # 5) Node.js (se usar npm/Yarn/Webpack)
 /node_modules/
