@@ -7,7 +7,7 @@ use yii\data\ArrayDataProvider;
 /* @var $allFavorites common\models\Favoritos[] */
 /* @var $allLoans common\models\Emprestimos[] */
 
-$this->title = 'Dashboard';
+$this->title = '';
 ?>
 
 <h2>Livros Disponíveis</h2>

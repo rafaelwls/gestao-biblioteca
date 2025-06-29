@@ -5,13 +5,8 @@ use yii\helpers\Url;
 
 /** @var $menuItems array */
 ?>
-
-<div class="p-4 border-b">
-    <h1 class="text-2xl font-bold">BiblioTech</h1>
-    <p class="text-sm text-gray-500">Sistema de Biblioteca</p>
-</div>
-
-<nav class="p-2">
+ 
+<nav class="p-2" >
     <?php foreach ($menuItems as $group):
         // checa se pelo menos um item desse grupo é o atual
         $groupIsActive = false;
