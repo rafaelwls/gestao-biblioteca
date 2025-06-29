@@ -43,6 +43,7 @@ class ItemComprasController extends Controller
                     'allow'   => true,
                     'actions' => ['index', 'view', 'update', 'delete', 'resposta', 'aprovar'],
                     'matchCallback' => function ($rule, $action) {
+                        /** @var \common\models\Usuarios $u */
                         $u = Yii::$app->user->identity;
                         return $u->isTrabalhador() || $u->isAdmin();
                     },

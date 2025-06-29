@@ -4,6 +4,8 @@ namespace common\models;
 
 use yii\db\Expression;
 use Yii;
+use yii\web\IdentityInterface;
+use yii\behaviors\TimestampBehavior;
 
 /**
  * This is the model class for table "usuarios".
@@ -24,52 +26,120 @@ use Yii;
  * @property Livros[] $livros
  * @property Vendas[] $vendas
  */
-class Usuarios extends \yii\db\ActiveRecord
+class Usuarios extends \yii\db\ActiveRecord implements IdentityInterface
 {
-
-
-    /**
-     * {@inheritdoc}
-     */
+    /** @inheritdoc */
     public static function tableName()
     {
         return 'usuarios';
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function rules()
+    /** @inheritdoc */
+    public function behaviors()
     {
         return [
-            [['data_validade'], 'default', 'value' => null],
-            [['is_trabalhador'], 'default', 'value' => 0],
-            [['id', 'nome', 'sobrenome', 'email'], 'required'],
-            [['id'], 'string'],
-            [['data_cadastro', 'data_validade'], 'safe'],
-            [['is_admin', 'is_trabalhador'], 'boolean'],
-            [['nome', 'sobrenome'], 'string', 'max' => 100],
-            [['email'], 'string', 'max' => 150],
-            [['email'], 'unique'],
-            [['id'], 'unique'],
+            [
+                'class'              => TimestampBehavior::class,
+                // preenche data_cadastro ao inserir
+                'createdAtAttribute' => 'data_cadastro',
+                // não usamos coluna updated_at
+                'updatedAtAttribute' => false,
+                'value'              => new Expression('CURRENT_TIMESTAMP'),
+            ],
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    /** @inheritdoc */
+    public function rules()
+    {
+        return [
+            [['nome', 'sobrenome', 'email', 'senha'], 'required'],
+            [['email'], 'email'],
+            [['email'], 'unique'],
+            [['nome', 'sobrenome'], 'string', 'max' => 100],
+            [['senha'], 'string', 'min' => 6],
+            [['is_admin', 'is_trabalhador'], 'boolean'],
+            [['data_validade'], 'default', 'value' => null],
+            [['data_cadastro', 'data_validade'], 'safe'],
+        ];
+    }
+
+    /** @inheritdoc */
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'nome' => 'Nome',
-            'sobrenome' => 'Sobrenome',
-            'email' => 'Email',
-            'data_cadastro' => 'Data Cadastro',
-            'data_validade' => 'Data Validade',
-            'is_admin' => 'Is Admin',
-            'is_trabalhador' => 'Is Trabalhador',
+            'nome'           => 'Nome',
+            'sobrenome'      => 'Sobrenome',
+            'email'          => 'E-mail',
+            'senha'          => 'Senha',
+            'data_cadastro'  => 'Data de Cadastro',
+            'data_validade'  => 'Data de Validade',
+            'is_admin'       => 'Administrador?',
+            'is_trabalhador' => 'Trabalhador?',
         ];
+    }
+
+    //
+    // IdentityInterface
+    //
+
+    /** {@inheritdoc} */
+    public static function findIdentity($id): ?IdentityInterface
+    {
+        return static::findOne(['id' => $id]);
+    }
+
+    /** {@inheritdoc} */
+    public static function findIdentityByAccessToken($token, $type = null): ?IdentityInterface
+    {
+        // se você quiser permitir busca via token JWT puro
+        return static::findOne(['auth_key' => $token]);
+    }
+
+    /** {@inheritdoc} */
+    public function getId()
+    {
+        return $this->getPrimaryKey();
+    }
+
+    /** {@inheritdoc} */
+    public function getAuthKey()
+    {
+        return $this->auth_key;
+    }
+
+    /** {@inheritdoc} */
+    public function validateAuthKey($authKey): bool
+    {
+        return $this->getAuthKey() === $authKey;
+    }
+
+    //
+    // Password handling
+    //
+
+    /**
+     * gera hash e atribui em $this->senha
+     */
+    public function setPassword(string $password)
+    {
+        $this->senha = Yii::$app->security->generatePasswordHash($password);
+    }
+
+    /**
+     * valida plaintext vs hash
+     */
+    public function validatePassword(string $password): bool
+    {
+        return Yii::$app->security->validatePassword($password, $this->senha);
+    }
+
+    /**
+     * gera auth_key para “lembrar-me” e JWT
+     */
+    public function generateAuthKey()
+    {
+        $this->auth_key = Yii::$app->security->generateRandomString();
     }
 
     /**
@@ -161,7 +231,7 @@ class Usuarios extends \yii\db\ActiveRecord
                 ['multa_paga' => false, ['>', 'multa_calculada', 0]]
             ])->exists();
     }
-    
+
     /**
      * @return bool se o usuário é administrador
      */

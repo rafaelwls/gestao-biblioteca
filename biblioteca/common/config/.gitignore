@@ -1,5 +1,4 @@
 codeception-local.php
-# antes de ir a produção deve ser alterado aqui
-# main-local.php
+main-local.php
 params-local.php
 test-local.php

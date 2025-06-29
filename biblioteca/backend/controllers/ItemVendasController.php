@@ -22,7 +22,8 @@ class ItemVendasController extends Controller
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-
+        // descomente para NÃO usar JWT enquanto testa
+        // unset($behaviors['authenticator']);
         // 1) JWT Bearer Auth para todas as ações
         $behaviors['authenticator'] = [
             'class' => JwtHttpBearerAuth::class,
@@ -43,6 +44,7 @@ class ItemVendasController extends Controller
                     'allow'   => true,
                     'actions' => ['index', 'view', 'update', 'delete', 'resposta', 'aprovar'],
                     'matchCallback' => function ($rule, $action) {
+                        /** @var \common\models\Usuarios $u */
                         $u = Yii::$app->user->identity;
                         return $u->isTrabalhador() || $u->isAdmin();
                     },
@@ -70,6 +72,10 @@ class ItemVendasController extends Controller
      */
     public function actionIndex()
     {
+
+        var_dump(get_class(Yii::$app->user->identity));
+        exit;
+
         $searchModel = new ItemVendasSearch();
         $dataProvider = $searchModel->search($this->request->queryParams);
 

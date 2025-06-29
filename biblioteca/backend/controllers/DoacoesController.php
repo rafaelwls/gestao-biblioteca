@@ -41,6 +41,7 @@ class DoacoesController extends Controller
                     'allow'   => true,
                     'actions' => ['index', 'view', 'update', 'delete', 'resposta', 'aprovar'],
                     'matchCallback' => function ($rule, $action) {
+                        /** @var \common\models\Usuarios $u */
                         $u = Yii::$app->user->identity;
                         return $u->isTrabalhador() || $u->isAdmin();
                     },
@@ -106,6 +107,7 @@ class DoacoesController extends Controller
     public function actionAprovar($id, $acao)
     {
         $doacao = $this->findModel($id);
+        /** @var \common\models\Usuarios $user */
         $user   = Yii::$app->user->identity;
 
         if (!$user->isTrabalhador() && !$user->isAdmin()) {
@@ -126,6 +128,7 @@ class DoacoesController extends Controller
      */
     public function actionUpdate($id)
     {
+        /** @var \common\models\Usuarios $user */
         $user = Yii::$app->user->identity;
         if (!$user->isTrabalhador() && !$user->isAdmin()) {
             throw new ForbiddenHttpException('Acesso negado.');
@@ -144,6 +147,7 @@ class DoacoesController extends Controller
      */
     public function actionDelete($id)
     {
+        /** @var \common\models\Usuarios $user */
         $user = Yii::$app->user->identity;
         if (!$user->isTrabalhador() && !$user->isAdmin()) {
             throw new ForbiddenHttpException('Acesso negado.');

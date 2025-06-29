@@ -10,11 +10,14 @@ use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
-use common\models\LoginForm;
+use frontend\models\LoginForm;
 use frontend\models\PasswordResetRequestForm;
 use frontend\models\ResetPasswordForm;
 use frontend\models\SignupForm;
 use frontend\models\ContactForm;
+use common\models\Exemplares;
+use common\models\Favoritos;
+use common\models\Emprestimos;
 
 /**
  * Site controller
@@ -29,17 +32,19 @@ class SiteController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['logout', 'signup'],
+                'only' => ['login', 'signup', 'logout'],
                 'rules' => [
+                    // login e signup só para visitantes
                     [
-                        'actions' => ['signup'],
-                        'allow' => true,
-                        'roles' => ['?'],
+                        'actions' => ['login', 'signup'],
+                        'allow'   => true,
+                        'roles'   => ['?'],    // “?” = guest
                     ],
+                    // logout só para usuários logados
                     [
                         'actions' => ['logout'],
-                        'allow' => true,
-                        'roles' => ['@'],
+                        'allow'   => true,
+                        'roles'   => ['@'],    // “@” = authenticated
                     ],
                 ],
             ],
@@ -75,9 +80,66 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
-    }
+        // Se não estiver logado, redireciona para login
+        if (Yii::$app->user->isGuest) {
+            return $this->redirect(['site/login']);
+        }
 
+        /** @var \common\models\Usuarios $u */
+        $u = Yii::$app->user->identity;
+
+        // Dados comuns a todos os usuários
+        $userId = $u->getId();
+
+        // --- Catálogo para usuário padrão ---
+        $available = \common\models\Exemplares::find()
+            ->alias('e')
+            ->where(['e.status' => 'disponível'])
+            ->innerJoinWith('livro l')
+            ->all();
+
+        $favorites = \common\models\Favoritos::find()
+            ->where(['usuario_id' => $userId])
+            ->joinWith('livro')
+            ->all();
+
+        $activeLoans = \common\models\Emprestimos::find()
+            ->where([
+                'usuario_id' => $userId,
+                'data_devolucao_real' => null,
+            ])->all();
+
+        $loanHistory = \common\models\Emprestimos::find()
+            ->where(['usuario_id' => $userId])
+            ->andWhere(['is not', 'data_devolucao_real', null])
+            ->all();
+
+        // --- Dashboard para Admin/Trabalhador ---
+        $allFavorites = \common\models\Favoritos::find()
+            ->joinWith(['usuario', 'livro'])
+            ->all();
+
+        $allLoans = \common\models\Emprestimos::find()
+            ->joinWith(['usuario', 'exemplar.livro'])
+            ->all();
+
+        // Decide qual view renderizar
+        if ($u->isAdmin() || $u->isTrabalhador()) {
+            return $this->render('dashboard', [
+                'available'    => $available,
+                'allFavorites' => $allFavorites,
+                'allLoans'     => $allLoans,
+            ]);
+        }
+
+        // usuário padrão
+        return $this->render('index', [
+            'available'   => $available,
+            'favorites'   => $favorites,
+            'activeLoans' => $activeLoans,
+            'loanHistory' => $loanHistory,
+        ]);
+    }
     /**
      * Logs in a user.
      *
@@ -89,17 +151,34 @@ class SiteController extends Controller
             return $this->goHome();
         }
 
+        $this->layout = 'blank';           // ou 'blank' se você tiver layout em branco
         $model = new LoginForm();
+
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
             return $this->goBack();
         }
-
+        // limpa password
         $model->password = '';
-
         return $this->render('login', [
             'model' => $model,
         ]);
     }
+    /**
+     * signup action.
+     */
+    public function actionSignup()
+    {
+        $this->layout = 'blank';
+        $model = new SignupForm();
+        if ($model->load(Yii::$app->request->post())) {
+            if ($user = $model->signup()) {
+                Yii::$app->user->login($user);
+                return $this->goHome();
+            }
+        }
+        return $this->render('signup', ['model' => $model]);
+    }
+
 
     /**
      * Logs out the current user.
@@ -109,7 +188,6 @@ class SiteController extends Controller
     public function actionLogout()
     {
         Yii::$app->user->logout();
-
         return $this->goHome();
     }
 
@@ -151,18 +229,18 @@ class SiteController extends Controller
      *
      * @return mixed
      */
-    public function actionSignup()
-    {
-        $model = new SignupForm();
-        if ($model->load(Yii::$app->request->post()) && $model->signup()) {
-            Yii::$app->session->setFlash('success', 'Thank you for registration. Please check your inbox for verification email.');
-            return $this->goHome();
-        }
+    // public function actionSignup()
+    // {
+    //     $model = new SignupForm();
+    //     if ($model->load(Yii::$app->request->post()) && $model->signup()) {
+    //         Yii::$app->session->setFlash('success', 'Thank you for registration. Please check your inbox for verification email.');
+    //         return $this->goHome();
+    //     }
 
-        return $this->render('signup', [
-            'model' => $model,
-        ]);
-    }
+    //     return $this->render('signup', [
+    //         'model' => $model,
+    //     ]);
+    // }
 
     /**
      * Requests password reset.

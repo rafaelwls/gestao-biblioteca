@@ -1,178 +1,82 @@
 <?php
 
-namespace backend\controllers;
+namespace common\models;
 
 use Yii;
-use common\models\PedidoEmprestimo;
-use common\models\Emprestimos;
-use backend\models\PedidoEmprestimoSearch;
-use yii\web\Controller;
-use yii\web\NotFoundHttpException;
-use yii\web\ForbiddenHttpException;
-use yii\filters\VerbFilter;
-use yii\filters\AccessControl;
-use sizeg\jwt\JwtHttpBearerAuth;
 
-class PedidoEmprestimoController extends Controller
+/**
+ * This is the model class for table "pedido_emprestimo".
+ *
+ * @property string $id
+ * @property string $usuario_id
+ * @property string $exemplar_id
+ * @property string $data_solicitacao
+ * @property string $status
+ *
+ * @property Exemplares $exemplar
+ * @property Usuarios $usuario
+ */
+class PedidoEmprestimo extends \yii\db\ActiveRecord
 {
+
+
     /**
-     * @inheritDoc
+     * {@inheritdoc}
      */
-    public function behaviors()
+    public static function tableName()
     {
-        $behaviors = [
-            // 1) JWT Bearer authentication
-            'authenticator' => [
-                'class' => JwtHttpBearerAuth::class,
-            ],
-            // 2) Access control by role
-            'access' => [
-                'class' => AccessControl::class,
-                'rules' => [
-                    // any logged in user can create a request
-                    [
-                        'allow'   => true,
-                        'actions' => ['create'],
-                        'roles'   => ['@'],
-                    ],
-                    // only worker or admin can index/view/respond/update/delete
-                    [
-                        'allow'   => true,
-                        'actions' => ['index', 'view', 'update', 'delete', 'resposta'],
-                        'matchCallback' => function ($rule, $action) {
-                            $u = Yii::$app->user->identity;
-                            return $u->isTrabalhador() || $u->isAdmin();
-                        },
-                    ],
-                ],
-            ],
-            // 3) Verb filter
-            'verbs' => [
-                'class'   => VerbFilter::class,
-                'actions' => [
-                    'delete'   => ['POST'],
-                    'resposta' => ['POST'],
-                ],
-            ],
+        return 'pedido_emprestimo';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function rules()
+    {
+        return [
+            [['status'], 'default', 'value' => 'PENDENTE'],
+            [['id', 'usuario_id', 'exemplar_id'], 'required'],
+            [['id', 'usuario_id', 'exemplar_id'], 'string'],
+            [['data_solicitacao'], 'safe'],
+            [['status'], 'string', 'max' => 20],
+            [['id'], 'unique'],
+            [['exemplar_id'], 'exist', 'skipOnError' => true, 'targetClass' => Exemplares::class, 'targetAttribute' => ['exemplar_id' => 'id']],
+            [['usuario_id'], 'exist', 'skipOnError' => true, 'targetClass' => Usuarios::class, 'targetAttribute' => ['usuario_id' => 'id']],
         ];
-
-        return array_merge(parent::behaviors(), $behaviors);
     }
 
     /**
-     * Lists all PedidoEmprestimo models.
+     * {@inheritdoc}
      */
-    public function actionIndex()
+    public function attributeLabels()
     {
-        $searchModel  = new PedidoEmprestimoSearch();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
-
-        return $this->render('index', [
-            'searchModel'  => $searchModel,
-            'dataProvider' => $dataProvider,
-        ]);
+        return [
+            'id' => 'ID',
+            'usuario_id' => 'Usuario ID',
+            'exemplar_id' => 'Exemplar ID',
+            'data_solicitacao' => 'Data Solicitacao',
+            'status' => 'Status',
+        ];
     }
 
     /**
-     * Displays a single PedidoEmprestimo model.
+     * Gets query for [[Exemplar]].
+     *
+     * @return \yii\db\ActiveQuery
      */
-    public function actionView($id)
+    public function getExemplar()
     {
-        return $this->render('view', [
-            'model' => $this->findModel($id),
-        ]);
+        return $this->hasOne(Exemplares::class, ['id' => 'exemplar_id']);
     }
 
     /**
-     * Creates a new PedidoEmprestimo model.
+     * Gets query for [[Usuario]].
+     *
+     * @return \yii\db\ActiveQuery
      */
-    public function actionCreate()
+    public function getUsuario()
     {
-        $user = Yii::$app->user->identity;
-
-        if (!$user->canBorrow()) {
-            throw new ForbiddenHttpException('Você não pode pegar mais empréstimos no momento.');
-        }
-
-        $model = new PedidoEmprestimo();
-        $model->usuario_id = $user->id;
-
-        // assume the POST payload contains only exemplar_id:
-        if ($model->load(Yii::$app->request->post(), '') && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
-        }
-
-        return $this->render('create', ['model' => $model]);
+        return $this->hasOne(Usuarios::class, ['id' => 'usuario_id']);
     }
 
-    /**
-     * Worker or admin responds to a request: ACEITO or RECUSADO.
-     */
-    public function actionResposta($id, $resposta)
-    {
-        $pedido = $this->findModel($id);
-
-        // only worker or admin allowed
-        $user = Yii::$app->user->identity;
-        if (!$user->isTrabalhador() && !$user->isAdmin()) {
-            throw new ForbiddenHttpException('Acesso negado.');
-        }
-
-        if (strtoupper($resposta) === 'ACEITO') {
-            $pedido->status = 'ACEITO';
-            $pedido->save(false);
-
-            // create the real loan record
-            Emprestimos::createFromPedido($pedido->usuario_id, $pedido->exemplar_id);
-        } else {
-            $pedido->status = 'RECUSADO';
-            $pedido->save(false);
-        }
-
-        return $this->redirect(['view', 'id' => $pedido->id]);
-    }
-
-    /**
-     * Updates an existing PedidoEmprestimo model.
-     */
-    public function actionUpdate($id)
-    {
-        $model = $this->findModel($id);
-
-        $user = Yii::$app->user->identity;
-        if (!$user->isTrabalhador() && !$user->isAdmin()) {
-            throw new ForbiddenHttpException('Acesso negado.');
-        }
-
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
-        }
-
-        return $this->render('update', ['model' => $model]);
-    }
-
-    /**
-     * Deletes an existing PedidoEmprestimo model.
-     */
-    public function actionDelete($id)
-    {
-        $user = Yii::$app->user->identity;
-        if (!$user->isTrabalhador() && !$user->isAdmin()) {
-            throw new ForbiddenHttpException('Acesso negado.');
-        }
-
-        $this->findModel($id)->delete();
-        return $this->redirect(['index']);
-    }
-
-    /**
-     * Finds the PedidoEmprestimo model based on its primary key value.
-     */
-    protected function findModel($id)
-    {
-        if (($model = PedidoEmprestimo::findOne(['id' => $id])) !== null) {
-            return $model;
-        }
-        throw new NotFoundHttpException('Página não encontrada.');
-    }
 }
