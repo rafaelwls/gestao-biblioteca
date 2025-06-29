@@ -34,9 +34,13 @@ composer install
 composer require vlucas/phpdotenv
 ```
 
-Crie um banco no postgresql com o nome de yii2advanced
+Crie um banco no postgresql com o nome de biblioteca
 Utilize o usuario: postgres senha: 123
-
+> caso o banco já exista, faça: 
+> ```
+> DROP SCHEMA public CASCADE;
+> CREATE SCHEMA public;
+> ```
 use 
 ```
 php init
