@@ -1,7 +1,107 @@
-main > .container, main > .container-fluid
-{
+main>.container,
+main>.container-fluid {
     padding: 70px 15px 20px;
 }
+
+
+/* light mode (red → white) */
+.header-title,
+.sidebar-header {
+    position: relative;
+    /* para posicionar o pseudo-elemento */
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* cria a barrinha */
+.header-title::after,
+.sidebar-header::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(to right,
+            #E31B23,
+            /* vermelho SC */
+            #FFFFFF
+            /* branco SC */
+        );
+    border-radius: 2px;
+    transition: background 0.3s ease;
+}
+
+/* dark mode override (blue → black) */
+[data-theme="dark"] .header-title::after,
+[data-theme="dark"] .sidebar-header::after {
+    background: linear-gradient(to right,
+            #1E3A8A,
+            /* azul escuro */
+            #000000
+            /* preto */
+        );
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* começa aqui da alteração */
+body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: row;
+    background-color: #F9FAFB;
+}
+
+/* Responsavel pela sidebar*/
+
+/* sidebar normal */
+#sidebar {
+    width: 180px;
+    padding: 1rem;
+    background: #ffffff;
+    border-right: 1px solid #E5E7EB;
+    overflow: hidden;
+    transition: width 0.5s ease,
+        padding 0.5s ease;
+}
+
+/* sidebar “colapsada” */
+.hidden-sidebar {
+    width: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    border-right: none !important;
+}
+
+/* Responsavel pela sidebar*/
+
+.main-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-wrapper header {
+    flex: 0;
+    padding: 1rem;
+    background: #ffffff;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.main-wrapper main {
+    flex: 1;
+    overflow: auto;
+    padding: 1.5rem;
+}
+
+/* fim aqui da alteração */
 
 .footer {
     background-color: #f5f5f5;
@@ -9,7 +109,8 @@ main > .container, main > .container-fluid
     height: 60px;
 }
 
-.footer > .container, .footer > .container-fluid {
+.footer>.container,
+.footer>.container-fluid {
     padding-right: 15px;
     padding-left: 15px;
 }
@@ -20,7 +121,8 @@ main > .container, main > .container-fluid
 }
 
 /* add sorting icons to gridview sort links */
-a.asc:after, a.desc:after {
+a.asc:after,
+a.desc:after {
     content: '';
     left: 3px;
     display: inline-block;
@@ -66,27 +168,27 @@ a.desc:after {
 }
 
 /* align the logout "link" (button in form) of the navbar */
-.navbar form > button.logout {
+.navbar form>button.logout {
     padding-top: 7px;
     color: rgba(255, 255, 255, 0.5);
 }
 
 @media(max-width:767px) {
-    .navbar form > button.logout {
-        display:block;
+    .navbar form>button.logout {
+        display: block;
         text-align: left;
         width: 100%;
         padding: 10px 0;
     }
 }
 
-.navbar form > button.logout:focus,
-.navbar form > button.logout:hover {
+.navbar form>button.logout:focus,
+.navbar form>button.logout:hover {
     text-decoration: none;
     color: rgba(255, 255, 255, 0.75);
 }
 
-.navbar form > button.logout:focus {
+.navbar form>button.logout:focus {
     outline: none;
 }
 
@@ -97,7 +199,90 @@ a.desc:after {
     padding: .75rem 1rem;
 }
 
-.breadcrumb-item > a
-{
+.breadcrumb-item>a {
     text-decoration: none;
+}
+
+/* ─── Barrinha de degradê no Header ──────────────────────────── */
+header {
+    position: relative;
+}
+
+header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(to right,
+            #E31B23,
+            /* vermelho SC */
+            #FFFFFF
+            /* branco SC */
+        );
+    border-radius: 2px 2px 0 0;
+    transition: background 0.3s ease;
+}
+
+/* ─── Barrinha de degradê no Topo da Sidebar ─────────────────── */
+aside {
+    position: relative;
+}
+
+aside::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(to right,
+            #E31B23,
+            /* vermelho SC */
+            #FFFFFF
+            /* branco SC */
+        );
+    border-radius: 0 0 2px 2px;
+    transition: background 0.3s ease;
+}
+
+/* ─── Dark Mode Override ─────────────────────────────────────── */
+[data-theme="dark"] header::after,
+[data-theme="dark"] aside::before {
+    background: linear-gradient(to right,
+            #1E3A8A,
+            /* azul escuro */
+            #000000
+            /* preto */
+        );
+}
+
+/* Banner do header */
+.page-header-bar {
+    background: linear-gradient(to right, #E31B23, #FFFFFF);
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem 0.375rem 0 0;
+    margin-bottom: 1rem;
+}
+
+.page-header-bar h2 {
+    margin: 0;
+    /* text-white já faz o texto ficar branco */
+}
+
+.page-header-bar .breadcrumb {
+    margin-left: auto;
+    background: transparent;
+    padding: 0;
+}
+
+/* Dark mode */
+[data-theme="dark"] .page-header-bar {
+    background: linear-gradient(to right, #1E3A8A, #000000);
+}
+
+[data-theme="dark"] .page-header-bar h2 {
+    /* garante contraste */
+    color: #FFF;
 }

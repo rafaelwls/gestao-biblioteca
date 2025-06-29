@@ -67,9 +67,7 @@ AppAsset::register($this);
             ]) ?>
             <?= Alert::widget() ?>
             <?= $content ?>
-            <li class="nav-item">
-                <?= Html::a('Dashboard', ['/dashboard/index'], ['class' => 'nav-link']) ?>
-            </li>
+          
 
         </div>
     </main>

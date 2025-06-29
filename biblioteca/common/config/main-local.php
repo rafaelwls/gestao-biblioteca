@@ -4,22 +4,10 @@ return [
     'components' => [
         'db' => [
             'class' => \yii\db\Connection::class,
-            'dsn' => 'pgsql:host=localhost;port=5432;dbname=biblioteca',
+            'dsn' => 'pgsql:host=localhost;dbname=biblioteca',
             'username' => 'postgres',
             'password' => '123',
             'charset' => 'utf8',
-        ],
-        'jwt' => [
-            'class'             => \sizeg\jwt\Jwt::class,
-            'signerKeyContents' => 'SUA_CHAVE_SECRETA_MAIS_LONGA_QUE_32_CARACTERES',
-            'signer'            => \sizeg\jwt\JwtSigner::HS256,
-            'constraints'       => [
-                function () {
-                    return new \Lcobucci\JWT\Validation\Constraint\LooseValidAt(
-                        \Lcobucci\Clock\SystemClock::fromSystemTimezone()
-                    );
-                },
-            ],
         ],
         'mailer' => [
             'class' => \yii\symfonymailer\Mailer::class,

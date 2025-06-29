@@ -9,9 +9,17 @@ $params = array_merge(
 return [
     'id' => 'app-frontend',
     'basePath' => dirname(__DIR__),
-    'layout' => '@frontend/views/layouts/main-biblio',
     'bootstrap' => ['log'],
     'controllerNamespace' => 'frontend\controllers',
+
+    // 1) define os aliases
+    'aliases' => [
+        // Pasta onde fica o entry script do frontend (frontend/web)
+        '@webroot' => dirname(__DIR__) . '/web',
+        // URL base do frontend (domínio que você mapeou no hosts)
+        '@web'     => 'http://biblioteca.site',  
+    ],
+
     'components' => [
         'request' => [
             'csrfParam' => '_csrf-frontend',
@@ -22,7 +30,6 @@ return [
             'identityCookie' => ['name' => '_identity-frontend', 'httpOnly' => true],
         ],
         'session' => [
-            // this is the name of the session cookie used for login on the frontend
             'name' => 'advanced-frontend',
         ],
         'log' => [
@@ -37,11 +44,20 @@ return [
         'errorHandler' => [
             'errorAction' => 'site/error',
         ],
+
+        // 2) configure o AssetManager do frontend
+        'assetManager' => [
+            'basePath' => '@webroot/assets',
+            'baseUrl'  => '@web/assets',
+        ],
+
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
-            'rules' => [],
+            'rules' => [
+            ],
         ],
     ],
+
     'params' => $params,
 ];

@@ -39,6 +39,7 @@ Utilize o usuario: postgres senha: 123
 
 use 
 ```
+php init
 php yii migrate
 ```
 
@@ -46,17 +47,43 @@ abra:
 ```
 C:\Windows\System32\drivers\etc\hosts
 ```
-crie um .env:
-```
-DB_DSN="pgsql:host=localhost;dbname=yii2advanced"
-DB_USER="postgres"
-DB_PASS="123"
-SECRET_KEY="a3f5c12d4e6b7a8c9d0e1f2a3b4c5d6e"
-```
 aplique o comando no final do arquivo e salve: 
 ```
 127.0.0.1 biblioteca.local
 127.0.0.1 admin.biblioteca.local
+```
+Abra o arquivo:
+```
+C:\xampp\apache\conf\extra\httpd-vhosts.conf
+```
+adicione o código:
+```
+<VirtualHost *:80>
+    ServerName biblioteca.local
+    DocumentRoot "C:/xampp/htdocs/gestao-biblioteca/biblioteca/frontend/web"
+    <Directory "C:/xampp/htdocs/gestao-biblioteca/biblioteca/frontend/web">
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+
+<VirtualHost *:80>
+    ServerName admin.biblioteca.local
+    DocumentRoot "C:/xampp/htdocs/gestao-biblioteca/biblioteca/backend/web"
+    <Directory "C:/xampp/htdocs/gestao-biblioteca/biblioteca/backend/web">
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+
+```
+
+crie um .env:
+```
+DB_DSN="pgsql:host=localhost;dbname=biblioteca"
+DB_USER="postgres"
+DB_PASS="123"
+SECRET_KEY="a3f5c12d4e6b7a8c9d0e1f2a3b4c5d6e"
 ```
 Rode o apache no xampp
 
