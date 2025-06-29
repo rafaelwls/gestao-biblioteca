@@ -11,6 +11,13 @@ return [
     'basePath' => dirname(__DIR__),
     'controllerNamespace' => 'backend\controllers',
     'bootstrap' => ['log'],
+    // ** 1) define os aliases para que @webroot e @web funcionem corretamente **
+    'aliases' => [
+        // Pasta onde fica o entry script do backend (backend/web)
+        '@webroot' => dirname(__DIR__) . '/web',
+        // URL base do backend (subdomínio que você mapeou)
+        '@web'     => 'http://admin.biblioteca.local',
+    ],
     'modules' => [],
     'components' => [
         'request' => [
@@ -22,7 +29,6 @@ return [
             'identityCookie' => ['name' => '_identity-backend', 'httpOnly' => true],
         ],
         'session' => [
-            // this is the name of the session cookie used for login on the backend
             'name' => 'advanced-backend',
         ],
         'log' => [
@@ -36,6 +42,11 @@ return [
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
+        ],
+        // ** 2) configura o AssetManager para usar esses aliases **
+        'assetManager' => [
+            'basePath' => '@webroot/assets',
+            'baseUrl'  => '@web/assets',
         ],
         'urlManager' => [
             'enablePrettyUrl' => true,
