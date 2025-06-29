@@ -1,32 +1,67 @@
-/* ─── Reset e Base ───────────────────────────────────────────────── */
-html, body {
-    height: 100%;
-    margin: 0;
-}
-
-/* Container principal */
-main > .container,
-main > .container-fluid {
+main>.container,
+main>.container-fluid {
     padding: 70px 15px 20px;
 }
 
-/* Utility */
+
+/* light mode (red → white) */
+.header-title,
+.sidebar-header {
+    position: relative;
+    /* para posicionar o pseudo-elemento */
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* cria a barrinha */
+.header-title::after,
+.sidebar-header::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(to right,
+            #E31B23,
+            /* vermelho SC */
+            #FFFFFF
+            /* branco SC */
+        );
+    border-radius: 2px;
+    transition: background 0.3s ease;
+}
+
+/* dark mode override (blue → black) */
+[data-theme="dark"] .header-title::after,
+[data-theme="dark"] .sidebar-header::after {
+    background: linear-gradient(to right,
+            #1E3A8A,
+            /* azul escuro */
+            #000000
+            /* preto */
+        );
+}
+
 .hidden {
     display: none !important;
 }
 
-/* ─── Layout Flex ────────────────────────────────────────────────── */
+/* começa aqui da alteração */
+body {
+    height: 100%;
+    margin: 0;
+}
+
 body {
     display: flex;
     flex-direction: row;
     background-color: #F9FAFB;
 }
 
-/* ─── Sidebar ───────────────────────────────────────────────────── */
-aside {
-    padding: 0 0.5rem;               /* respiro nas laterais */
-}
+/* Responsavel pela sidebar*/
 
+/* sidebar normal */
 #sidebar {
     width: 180px;
     padding: 1rem;
@@ -34,9 +69,10 @@ aside {
     border-right: 1px solid #E5E7EB;
     overflow: hidden;
     transition: width 0.5s ease,
-                padding 0.5s ease;
+        padding 0.5s ease;
 }
 
+/* sidebar “colapsada” */
 .hidden-sidebar {
     width: 0 !important;
     padding-left: 0 !important;
@@ -44,79 +80,37 @@ aside {
     border-right: none !important;
 }
 
-/* Cabeçalho dentro da sidebar */
-.sidebar-header {
-    /* mesma altura, padding e borda arredondada do header */
-    min-height: 3.5rem;
-    padding: 0 1rem;
-    display: flex;
-    align-items: center;
-    border-radius: 0.375rem;
-    background: linear-gradient(to right, #E31B23, #FFFFFF);
-    transition: background 0.3s ease;
-    margin: 0.75rem 0;
-    width: auto;
-    color: #FFFFFF;
-}
+/* Responsavel pela sidebar*/
 
-/* ─── Área de Conteúdo ───────────────────────────────────────────── */
 .main-wrapper {
     flex: 1;
     display: flex;
     flex-direction: column;
 }
 
-/* Banner completo no header */
 .main-wrapper header {
-    min-height: 3.5rem;
-    padding: 0 1rem;
-    display: flex;
-    align-items: center;
-    border-radius: 0.375rem;
-    background: linear-gradient(to right, #E31B23, #FFFFFF);
-    transition: background 0.3s ease;
-    margin-bottom: 0.75rem;
-    border-bottom: none;
+    flex: 0;
+    padding: 1rem;
+    background: #ffffff;
+    border-bottom: 1px solid #E5E7EB;
 }
 
-/* Força navbar interno transparente e textos brancos */
-.main-wrapper header .navbar {
-    background-color: transparent !important;
-}
-.main-wrapper header .navbar .navbar-brand,
-.main-wrapper header .navbar-nav .nav-link,
-.main-wrapper header button {
-    color: #FFFFFF !important;
-}
-
-/* Conteúdo principal */
 .main-wrapper main {
     flex: 1;
     overflow: auto;
     padding: 1.5rem;
 }
 
-/* ─── Dark Mode Overrides ───────────────────────────────────────── */
-[data-theme="dark"] .sidebar-header,
-[data-theme="dark"] .main-wrapper header {
-    background: linear-gradient(to right, #1E3A8A, #000000);
-}
-[data-theme="dark"] .main-wrapper header .navbar .navbar-brand,
-[data-theme="dark"] .main-wrapper header .navbar-nav .nav-link,
-[data-theme="dark"] .main-wrapper header button,
-[data-theme="dark"] .sidebar-header h1,
-[data-theme="dark"] .sidebar-header p {
-    color: #FFFFFF !important;
-}
+/* fim aqui da alteração */
 
-/* ─── Footer ────────────────────────────────────────────────────── */
 .footer {
     background-color: #f5f5f5;
     font-size: .9em;
     height: 60px;
 }
-.footer > .container,
-.footer > .container-fluid {
+
+.footer>.container,
+.footer>.container-fluid {
     padding-right: 15px;
     padding-left: 15px;
 }
@@ -127,7 +121,7 @@ aside {
     font-style: italic;
 }
 
-/* Ícones de sort em GridView */
+/* add sorting icons to gridview sort links */
 a.asc:after,
 a.desc:after {
     content: '';
@@ -174,21 +168,14 @@ a.desc:after {
     margin: 0 0 15px 0;
 }
 
-/* Alinha botão de logout na navbar */
-.navbar form > button.logout {
+/* align the logout "link" (button in form) of the navbar */
+.navbar form>button.logout {
     padding-top: 7px;
     color: rgba(255, 255, 255, 0.5);
 }
-.navbar form > button.logout:focus,
-.navbar form > button.logout:hover {
-    text-decoration: none;
-    color: rgba(255, 255, 255, 0.75);
-}
-.navbar form > button.logout:focus {
-    outline: none;
-}
-@media (max-width: 767px) {
-    .navbar form > button.logout {
+
+@media(max-width:767px) {
+    .navbar form>button.logout {
         display: block;
         text-align: left;
         width: 100%;
@@ -196,12 +183,23 @@ a.desc:after {
     }
 }
 
-/* Breadcrumb widget */
+.navbar form>button.logout:focus,
+.navbar form>button.logout:hover {
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.navbar form>button.logout:focus {
+    outline: none;
+}
+
+/* style breadcrumb widget as in previous bootstrap versions */
 .breadcrumb {
     background-color: var(--bs-gray-200);
     border-radius: .25rem;
     padding: .75rem 1rem;
 }
-.breadcrumb-item > a {
+
+.breadcrumb-item>a {
     text-decoration: none;
 }

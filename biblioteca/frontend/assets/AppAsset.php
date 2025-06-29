@@ -1,23 +1,22 @@
 <?php
+
 namespace frontend\assets;
 
 use yii\web\AssetBundle;
 
+/**
+ * Main frontend application asset bundle.
+ */
 class AppAsset extends AssetBundle
 {
     public $basePath = '@webroot';
-    public $baseUrl  = '@web';
+    public $baseUrl = '@web';
     public $css = [
-        // Tailwind via CDN
-        
-        'css/site.css',
-        'https://cdn.jsdelivr.net/npm/tailwindcss@3.4.6/dist/tailwind.min.css',
+        'web/css/tailwind.css',
     ];
-    public $js = [
-        // seus scripts aqui
-    ];
+    public $js = [];
     public $depends = [
         'yii\web\YiiAsset',
-        // 'yii\bootstrap\BootstrapAsset', // <<< REMOVA esta linha
+        'yii\bootstrap5\BootstrapAsset',
     ];
 }

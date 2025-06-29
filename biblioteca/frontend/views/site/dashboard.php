@@ -43,4 +43,3 @@ $this->title = 'Dashboard Administrativo';
         'multa_calculada',
     ],
 ]) ?>
-    

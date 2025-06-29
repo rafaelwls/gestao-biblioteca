@@ -5,16 +5,11 @@ use yii\helpers\Url;
 ?>
 
 <div class="flex items-center justify-between p-4">
-    <div class="page-header-bar flex items-center gap-4">
-        <h2 class="text-xl font-semibold text-white">
-            <?= Html::encode($this->context->view->title ?: 'Dashboard') ?>
-        </h2>
-        <?= \yii\widgets\Breadcrumbs::widget([
-            'homeLink' => ['label' => 'Início', 'url' => ['/site/index']],
-            'links' => $this->params['breadcrumbs'] ?? [],
-        ]) ?>
+    <div class="flex items-center gap-4">
+        <!-- botão de colapsar sidebar (se quiser JS) -->
+        <button id="sidebarToggle" class="text-2xl">☰</button>
+        <h2 class="text-xl font-semibold"><?= Html::encode($this->context->view->title ?: 'Dashboard') ?></h2>
     </div>
-
 
     <div>
         <?php if (Yii::$app->user->isGuest): ?>

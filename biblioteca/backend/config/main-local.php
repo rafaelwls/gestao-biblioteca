@@ -3,8 +3,17 @@
 $config = [
     'components' => [
         'request' => [
+
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
-            'cookieValidationKey' => 'z_sq57_9sdN7NSKjZ2dRR4REug245gio',
+            'cookieValidationKey' => 'P1l-shYI-K9GfhRDa9FHed7t1t7jZrCI',
+        ],
+        'urlManager' => [
+            'class' => 'yii\web\UrlManager',
+            'enablePrettyUrl' => true,    // ativa URLs “bonitinhas”
+            'showScriptName' => false,    // esconde o index.php
+            'rules' => [
+                // suas regras de rota, se precisar
+            ],
         ],
     ],
 ];
