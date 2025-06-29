@@ -54,24 +54,28 @@ AppAsset::register($this);
     <?php $this->beginBody() ?>
 
     <!-- Sidebar -->
-    <aside id="sidebar">
+    <aside class="fixed inset-y-0 left-0 w-60 bg-white border-r z-40">
+        <div class="sidebar-header p-4">
+            <h1 class="text-xl font-bold">BiblioTech</h1>
+            <p class="text-sm text-gray-500">Sistema de Biblioteca</p>
+        </div>
         <?= \frontend\widgets\SidebarWidget::widget() ?>
     </aside>
 
-    <!-- Conteúdo principal --> 
-    <div class="main-wrapper header-title">
+    <!-- Conteúdo principal -->
+    <div class="main-wrapper flex-1 flex flex-col">
         <header>
-            <?= \frontend\widgets\HeaderWidget::widget() ?> 
+            <?= \frontend\widgets\HeaderWidget::widget() ?>
             <button id="sidebarToggle" class="text-2xl">☰</button>
             <button id="themeToggle" class="ml-2">🌙</button>
         </header>
         <main>
             <?= $content ?>
         </main>
-    </div> 
+    </div>
 
     <?php $this->endBody() ?>
 </body>
-
+ 
 </html>
 <?php $this->endPage() ?>
