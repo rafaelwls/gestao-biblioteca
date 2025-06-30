@@ -6,9 +6,10 @@ use yii\web\Controller;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use common\models\Livros;
-use frontend\models\Favoritos;
+use common\models\Favoritos;
+use yii\web\Response;  
 use yii\web\ForbiddenHttpException;
-use yii\web\NotFoundHttpException;
+use yii\web\NotFoundHttpException; 
 
 class LivrosController extends Controller
 {
@@ -49,31 +50,32 @@ class LivrosController extends Controller
      * Exclui um livro (somente admin/trabalhador).
      * URL: /livros/delete?id=…
      */
-   public function actionDelete($id)
-{
-    $model = Livros::findOne($id);
-    if (!$model) {
-        throw new NotFoundHttpException('Livro não encontrado.');
+    public function actionDelete($id)
+    {
+        $model = Livros::findOne($id);
+        if (!$model) {
+            throw new NotFoundHttpException('Livro não encontrado.');
+        }
+
+        // só altera o status para INATIVO em vez de apagar
+        $model->status = 'INATIVO';
+        $model->save(false, ['status']);
+
+        return $this->redirect(['index']);
     }
 
-    // só altera o status para INATIVO em vez de apagar
-    $model->status = 'INATIVO';
-    $model->save(false, ['status']);
-
-    return $this->redirect(['index']);
-}
-
-
     /**
-     * Action que lista os livros marcados como favoritos pelo usuário logado.
-     * URL: /livros/favoritos
+     * Cria um novo Livro.
      */
-    public function actionFavoritos()
+public function actionFavoritos()
     {
         $userId = Yii::$app->user->id;
+
+        // Monta a query incluindo a coluna data_favorito
         $query = Livros::find()
-            ->alias('livro')
-            ->innerJoin('favoritos f', 'f.livro_id = livro.id')
+            ->alias('l')
+            ->select(['l.*', 'f.data_favorito'])
+            ->innerJoin('favoritos f', 'f.livro_id = l.id')
             ->where(['f.usuario_id' => $userId]);
 
         $dataProvider = new ActiveDataProvider([
@@ -82,15 +84,50 @@ class LivrosController extends Controller
                 'pageSize' => 10,
             ],
             'sort' => [
-                'defaultOrder' => ['f.data_favorito' => SORT_DESC],
+                // usa o nome do atributo virtual "data_favorito"
+                'defaultOrder' => ['data_favorito' => SORT_DESC],
+                'attributes' => [
+                    'titulo',
+                    'data_favorito' => [
+                        'asc'  => ['f.data_favorito' => SORT_ASC],
+                        'desc' => ['f.data_favorito' => SORT_DESC],
+                        'label'=> 'Data de Favorito',
+                    ],
+                ],
             ],
         ]);
 
-        // Se você quer usar a view que já existe em views/livro/favoritos.php:
         return $this->render('//livro/favoritos', [
             'dataProvider' => $dataProvider,
         ]);
     }
+    /**
+     * Adiciona ou remove o livro dos favoritos do usuário logado
+     */
+    /**
+ * Adiciona ou remove o livro dos favoritos do usuário logado
+ */
+    public function actionToggleFavorite($id)
+    {
+        $userId = Yii::$app->user->id;
+
+        // procura o favorito
+        $fav = Favoritos::findOne(['usuario_id' => $userId, 'livro_id' => $id]);
+        if ($fav) {
+            $fav->delete();
+            Yii::$app->session->setFlash('success', 'Livro removido dos favoritos.');
+        } else {
+            $new = new Favoritos();
+            $new->usuario_id = $userId;
+            $new->livro_id   = $id;
+            $new->save(false);
+            Yii::$app->session->setFlash('success', 'Livro adicionado aos favoritos.');
+        }
+
+        // redireciona de volta à página de detalhe
+        return $this->redirect(['view', 'id' => $id]);
+    }
+
 
     public function actionIndex()
     {
@@ -103,9 +140,9 @@ class LivrosController extends Controller
         }
 
         $dataProvider = new ActiveDataProvider([
-            'query'      => $query,
+            'query' => $query,
             'pagination' => ['pageSize' => 10],
-            'sort'       => ['defaultOrder' => ['titulo' => SORT_ASC]],
+            'sort' => ['defaultOrder' => ['titulo' => SORT_ASC]],
         ]);
 
         return $this->render('//livro/index', [
@@ -140,6 +177,25 @@ class LivrosController extends Controller
 
         // 5) Se não for POST ou falhar validação, renderiza o form de update
         return $this->render('//livro/update', [
+            'model' => $model,
+        ]);
+    }
+
+    /**
+     * Exibe os detalhes de um Livro.
+     *
+     * @param string $id
+     * @return string
+     * @throws NotFoundHttpException
+     */
+    public function actionView($id)
+    {
+        $model = Livros::findOne($id);
+        if (!$model) {
+            throw new NotFoundHttpException('Livro não encontrado.');
+        }
+        // como suas views estão em views/livro/
+        return $this->render('//livro/view', [
             'model' => $model,
         ]);
     }

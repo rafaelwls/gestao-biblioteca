@@ -23,7 +23,13 @@ class SidebarWidget extends Widget
                 ['title' => 'Dashboard Livros', 'url' => ['/dashboard/livros'], 'icon' => '📚'],
             ],
         ],
-        // … adicione o resto aqui …
+        [
+            'title' => 'Usuários',
+            'icon' => '👥',
+            'items' => [
+                ['title' => 'Todos os usuários', 'url' => ['/usuarios/index'], 'icon' => '👥'], 
+            ],
+        ],  
     ];
 
     public function run()

@@ -1,32 +1,27 @@
 <?php
-
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
-/* @var $form yii\widgets\ActiveForm */
 /* @var $model common\models\Livro */
 ?>
 
-<div class="bg-white p-6 rounded-lg shadow-sm max-w-2xl">
-
+<div class="livro-form">
     <?php $form = ActiveForm::begin([
-        'fieldConfig' => [
-            'template' => "{label}\n{input}\n{error}",
-            'labelOptions' => ['class' => 'block font-medium mb-1'],
-            'inputOptions' => ['class' => 'w-full border px-3 py-2 rounded-md'],
-            'errorOptions' => ['class' => 'text-red-600 text-xs mt-1'],
-        ],
+        'id' => 'livro-form',
+        'options' => ['class' => 'form-container'],
     ]); ?>
 
-    <?= $form->field($model, 'titulo') ?>
-    <?= $form->field($model, 'autor') ?>
-    <?= $form->field($model, 'genero') ?>
-    <?= $form->field($model, 'isbn') ?>
+    <?= $form->errorSummary($model) // mostra aqui todos os erros ?>  
+    
+    <?= $form->field($model, 'titulo')->textInput(['class'=>'form-input']) ?>
+    <?= $form->field($model, 'autor')->textInput(['class'=>'form-input']) ?>
+    <?= $form->field($model, 'genero')->textInput(['class'=>'form-input']) ?>
+    <?= $form->field($model, 'isbn')->textInput(['class'=>'form-input']) ?>
     <?= $form->field($model, 'status')->dropDownList([
-        'Disponível' => 'Disponível',
-        'Emprestado' => 'Emprestado',
-        'Vendido' => 'Vendido',
-    ], ['class' => 'border px-3 py-2 rounded-md w-full']) ?>
+        'Disponivel' => 'Disponivel',
+        'Emprestado'  => 'Emprestado',
+        'Vendido'     => 'Vendido',
+    ], ['class'=>'form-input']) ?>
 
     <div class="mt-4">
         <?= Html::submitButton(

@@ -38,36 +38,41 @@ class Livros extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
+            // torne titulo, autor e genero obrigatórios
+            [['titulo', 'autor', 'genero'], 'required'],
+
+            // demais regras para outros campos
             [['isbn', 'subtitulo', 'ano_publicacao', 'idioma', 'paginas'], 'default', 'value' => null],
-            [['id', 'titulo'], 'required'],
-            [['id'], 'string'],
-            [['ano_publicacao', 'paginas'], 'default', 'value' => null],
             [['ano_publicacao', 'paginas'], 'integer'],
             [['data_criacao'], 'safe'],
+
             [['isbn'], 'string', 'max' => 20],
-            [['titulo', 'subtitulo'], 'string', 'max' => 255],
-            [['idioma'], 'string', 'max' => 50],
+            [['titulo', 'subtitulo', 'autor', 'genero'], 'string', 'max' => 255],
             [['isbn'], 'unique'],
-            [['id'], 'unique'],
+            [['id'], 'safe'],
         ];
     }
+
 
     /**
      * {@inheritdoc}
      */
-    public function attributeLabels()
+   public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'isbn' => 'Isbn',
-            'titulo' => 'Titulo',
-            'subtitulo' => 'Subtitulo',
-            'ano_publicacao' => 'Ano Publicacao',
-            'idioma' => 'Idioma',
-            'paginas' => 'Paginas',
-            'data_criacao' => 'Data Criacao',
+            'id'             => 'ID',
+            'isbn'           => 'ISBN',
+            'titulo'         => 'Título',
+            'subtitulo'      => 'Subtítulo',
+            'autor'          => 'Autor',
+            'genero'         => 'Gênero',
+            'ano_publicacao' => 'Ano de Publicação',
+            'idioma'         => 'Idioma',
+            'paginas'        => 'Páginas',
+            'data_criacao'   => 'Data de Criação',
         ];
     }
+
 
     /**
      * Gets query for [[Exemplares]].

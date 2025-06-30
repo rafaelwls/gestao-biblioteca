@@ -41,9 +41,10 @@ Utilize o usuario: postgres senha: 123
 > DROP SCHEMA public CASCADE;
 > CREATE SCHEMA public;
 > ```
+
+>> CASO, E APENAS CASO REINSTALE TUDO, rode ```php init``` sem sobrescrever os existentes
 use 
 ```
-php init
 php yii migrate
 ```
 

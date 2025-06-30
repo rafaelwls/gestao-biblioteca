@@ -2,9 +2,11 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\Livro */
+/* @var $model common\models\Usuarios */
 
-$this->title = 'Criando um novo Livro';
+$this->title = 'Criando um novo Usuário';
+$this->params['breadcrumbs'][] = ['label' => 'Todos os Usuários', 'url' => ['index']];
+$this->params['breadcrumbs'][] = $this->title;
 ?>
 <?php if (Yii::$app->session->hasFlash('error')): ?>
     <div class="text-red-600 mb-4">
@@ -12,13 +14,11 @@ $this->title = 'Criando um novo Livro';
     </div>
 <?php endif; ?>
 
+<div class="form-container max-w-4xl mx-auto">
 
-<div class="form-container">
-    
-
-    <div class="max-w-4xl mx-auto bg-white shadow-md rounded-md">
+    <div class="bg-white shadow-md rounded-md">
         <div class="border-b border-gray-200 px-6 py-4">
-            <h3 class="text-lg font-medium leading-6 text-gray-900">
+            <h3 class="text-lg font-medium text-gray-900">
                 <?= Html::encode($this->title) ?>
             </h3>
         </div>
@@ -29,4 +29,5 @@ $this->title = 'Criando um novo Livro';
             ]) ?>
         </div>
     </div>
+
 </div>
