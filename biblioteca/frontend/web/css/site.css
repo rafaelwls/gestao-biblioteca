@@ -28,9 +28,9 @@ aside {
     padding: 0 0.5rem;
 }
 
- 
+
 #sidebar-toogle:hover {
-  cursor: pointer;
+    cursor: pointer;
 }
 
 .hidden-sidebar {
@@ -82,7 +82,8 @@ aside {
 /* Botão de logout */
 
 .logout-btn {
-    background-color: #6B7280; /* cinza médio */
+    background-color: #6B7280;
+    /* cinza médio */
     color: white;
     padding: 0.25rem 0.75rem;
     border-radius: 0.375rem;
@@ -98,9 +99,12 @@ aside {
 
 /* no seu CSS global */
 .modal-overlay {
-  position: fixed !important;
-  z-index: 9999 !important;
-  top: 0; left: 0; right: 0; bottom: 0;
+    position: fixed !important;
+    z-index: 9999 !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 
@@ -355,6 +359,12 @@ ul.pagination li.disabled a {
     color: #FFFFFF !important;
 }
 
+[data-theme="dark"] #sidebar-toogle,
+[data-theme="dark"] #sidebar-toogle *,
+[data-theme="dark"] #sidebar-toogle a {
+    color: #ffffff !important;
+}
+
 /* fundo geral em dark mode */
 [data-theme="dark"] body {
     background-color: #2d2d2d;
@@ -363,8 +373,8 @@ ul.pagination li.disabled a {
 
 /* se quiser que a sidebar inteira também fique num cinza um pouco diferente */
 [data-theme="dark"] aside {
-    background-color: #333333; 
-    border-right-color: #444444; 
+    background-color: #333333;
+    border-right-color: #444444;
 }
 
 /* ─── Full-screen Dark Background ─────────────────────────────────── */
@@ -416,67 +426,79 @@ body[data-theme="dark"],
 
 /* ─── Dark Mode: Formulários ─────────────────────────────────────────── */
 [data-theme="dark"] .form-container {
-  background-color: #1F2937;       /* card escuro */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    background-color: #1F2937;
+    /* card escuro */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
 [data-theme="dark"] .form-label {
-  color: #E5E7EB;                  /* texto claro */
+    color: #E5E7EB;
+    /* texto claro */
 }
 
 [data-theme="dark"] .form-input,
 [data-theme="dark"] .form-select,
 [data-theme="dark"] .form-textarea {
-  background-color: #374151;       /* fundo dos inputs */
-  border-color: #4B5563;           /* borda escura */
-  color: #E5E7EB;                  /* texto claro */
+    background-color: #374151;
+    /* fundo dos inputs */
+    border-color: #4B5563;
+    /* borda escura */
+    color: #E5E7EB;
+    /* texto claro */
 }
 
 [data-theme="dark"] .form-input::placeholder,
 [data-theme="dark"] .form-textarea::placeholder {
-  color: #9CA3AF;                  /* placeholder claro */
+    color: #9CA3AF;
+    /* placeholder claro */
 }
 
 [data-theme="dark"] .form-input:focus,
 [data-theme="dark"] .form-select:focus,
 [data-theme="dark"] .form-textarea:focus {
-  border-color: #3B82F6;
-  box-shadow: 0 0 0 3px rgba(59,130,246, 0.5);
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
 }
 
 [data-theme="dark"] .form-button-primary {
-  background-color: #2563EB;       /* mantém destaque em botão principal */
-  color: #FFFFFF;
+    background-color: #2563EB;
+    /* mantém destaque em botão principal */
+    color: #FFFFFF;
 }
 
 [data-theme="dark"] .form-button-primary:hover {
-  background-color: #1E40AF;
+    background-color: #1E40AF;
 }
 
 [data-theme="dark"] .form-button-secondary {
-  background-color: #4B5563;       /* botão secundário escuro */
-  color: #FFFFFF;
+    background-color: #4B5563;
+    /* botão secundário escuro */
+    color: #FFFFFF;
 }
 
 [data-theme="dark"] .form-button-secondary:hover {
-  background-color: #2F3748;
+    background-color: #2F3748;
 }
 
 [data-theme="dark"] .form-button-danger {
-  background-color: #DC2626;       /* vermelho escuro */
-  color: #FFFFFF;
+    background-color: #DC2626;
+    /* vermelho escuro */
+    color: #FFFFFF;
 }
 
 [data-theme="dark"] .form-button-danger:hover {
-  background-color: #991B1B;
+    background-color: #991B1B;
 }
 
 /* ─── Dark Mode: inputs readonly ───────────────────────────────────────── */
 [data-theme="dark"] .form-input[readonly] {
-  background-color: #4B5563 !important;  /* cinza-escuro para readonly */
-  border-color:    #6B7280 !important;   /* borda um pouco mais clara */
-  color:           #E5E7EB !important;   /* texto claro */
-  cursor:          not-allowed;
+    background-color: #4B5563 !important;
+    /* cinza-escuro para readonly */
+    border-color: #6B7280 !important;
+    /* borda um pouco mais clara */
+    color: #E5E7EB !important;
+    /* texto claro */
+    cursor: not-allowed;
 }
 
 
@@ -524,9 +546,10 @@ body[data-theme="dark"],
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
+
 /* Alinha somente o form de logout */
 .main-wrapper header form[action*="/site/logout"] {
-  margin-left: auto;
+    margin-left: auto;
 }
 
 
@@ -572,7 +595,7 @@ body[data-theme="dark"],
 .form-textarea {
     width: 100%;
     padding: 0.5rem 0.75rem;
-    border: 1px solid #D1D5DB; 
+    border: 1px solid #D1D5DB;
     border-radius: 0.375rem;
     font-size: 1rem;
     transition: border-color 0.2s, box-shadow 0.2s;
@@ -582,7 +605,7 @@ body[data-theme="dark"],
 .form-select:focus,
 .form-textarea:focus {
     outline: none;
-    border-color: #3B82F6; 
+    border-color: #3B82F6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
 }
 
@@ -598,7 +621,7 @@ body[data-theme="dark"],
 }
 
 .form-button-primary {
-    background-color: #3B82F6; 
+    background-color: #3B82F6;
     color: #FFFFFF;
 }
 
@@ -607,7 +630,7 @@ body[data-theme="dark"],
 }
 
 .form-button-secondary {
-    background-color: #6B7280; 
+    background-color: #6B7280;
     color: #FFFFFF;
 }
 
@@ -616,17 +639,19 @@ body[data-theme="dark"],
 }
 
 .form-button-danger {
-    background-color: #EF4444; 
+    background-color: #EF4444;
     color: #FFFFFF;
 }
 
 .form-button-danger:hover {
     background-color: #DC2626;
 }
+
 /* Estilo para inputs readonly */
 .form-input[readonly] {
-  background-color: #F3F4F6;      /* cinza claro */
-  cursor: not-allowed;
+    background-color: #F3F4F6;
+    /* cinza claro */
+    cursor: not-allowed;
 }
 
 
