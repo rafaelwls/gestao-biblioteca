@@ -35,6 +35,15 @@ class SidebarWidget extends Widget
             'icon' => '👥',
             'items' => [
                 ['title' => 'Aprovar as Compras', 'url' => ['/compras/index'], 'icon' => '👥'], 
+                ['title' => 'Historico das Compras', 'url' => ['/compras/history'], 'icon' => '👥'], 
+            ],
+        ], 
+        [
+            'title' => 'Emprestimos',
+            'icon' => '👥',
+            'items' => [
+                ['title' => 'Aprovar os emprestimos', 'url' => ['/emprestimos/index'], 'icon' => '👥'], 
+                ['title' => 'Historico dos emprestimos', 'url' => ['/emprestimos/history'], 'icon' => '👥'], 
             ],
         ],  
     ];

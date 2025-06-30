@@ -28,15 +28,7 @@ aside {
     padding: 0 0.5rem;
 }
 
-#sidebar {
-    width: 180px;
-    padding: 1rem;
-    background: #ffffff;
-    border-right: 1px solid #E5E7EB;
-    overflow: hidden;
-    transition: width 0.5s ease,
-        padding 0.5s ease;
-}
+ 
 #sidebar-toogle:hover {
   cursor: pointer;
 }
@@ -371,10 +363,8 @@ ul.pagination li.disabled a {
 
 /* se quiser que a sidebar inteira também fique num cinza um pouco diferente */
 [data-theme="dark"] aside {
-    background-color: #333333;
-    /* ajusta o fundo do painel lateral */
-    border-right-color: #444444;
-    /* e a cor da borda */
+    background-color: #333333; 
+    border-right-color: #444444; 
 }
 
 /* ─── Full-screen Dark Background ─────────────────────────────────── */

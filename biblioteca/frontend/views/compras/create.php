@@ -6,7 +6,7 @@ use yii\widgets\ActiveForm;
 /* @var $model common\models\Compras */
 /* @var $exemplar common\models\Exemplares */
 
-$this->title = 'Registrar Compra';
+$this->title = 'Solicitar Venda';
 ?>
 <div class="compras-create">
     <h1><?= Html::encode($this->title) ?></h1>

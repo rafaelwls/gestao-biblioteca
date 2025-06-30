@@ -1,121 +1,131 @@
 <?php
-
 namespace frontend\controllers;
 
 use Yii;
 use yii\web\Controller;
-use yii\data\ActiveDataProvider;
-use yii\filters\AccessControl;
 use yii\web\NotFoundHttpException;
-use common\models\{PedidoEmprestimo, Emprestimos, EmprestimoForm, Exemplares, Model};
+use yii\web\ForbiddenHttpException;
+use common\models\Emprestimos;
+use common\models\Exemplares;
+use yii\data\ActiveDataProvider;
 
-class EmprestimoController extends Controller
+class EmprestimosController extends Controller
 {
-    public $layout = '@frontend/views/layouts/main-biblio';
-
-    public function behaviors()
+    /**
+     * Registra empréstimo sem form (botão na view do livro).
+     */
+    public function actionCreate($livroId)
     {
-        return ['access' => [
-            'class' => AccessControl::class,
-            'rules' => [
-                ['allow' => true, 'roles' => ['@'], 'actions' => ['meus', 'solicitar']],
-                [
-                    'allow' => true,
-                    'roles' => ['@'],
-                    'matchCallback' => fn() => Yii::$app->user->identity->is_admin ||
-                        Yii::$app->user->identity->is_trabalhador,
-                    'actions' => ['pedidos', 'aprovar', 'devolver']
-                ],
-                [
-                    'allow' => true,
-                    'roles' => ['@'],
-                    'matchCallback' => fn() => Yii::$app->user->identity->is_admin,
-                    'actions' => ['index']
-                ],
-            ],
-        ]];
-    }
-
-    /* ---------- usuario ---------- */
-    public function actionMeus()
-    {
-        $uid   = Yii::$app->user->id;
-        $ativos = Emprestimos::find()->where([
-            'usuario_id' => $uid,
-            'data_devolucao_real' => null
-        ]);
-        $hist  = Emprestimos::find()->where(['usuario_id' => $uid])
-            ->andWhere('data_devolucao_real IS NOT NULL');
-
-        return $this->render('meus', [
-            'ativos' => $ativos->all(),
-            'hist'  => $hist->all(),
-        ]);
-    }
-
-    public function actionSolicitar($exemplar)
-    {
-        $p = new PedidoEmprestimo([
-            'usuario_id' => Yii::$app->user->id,
-            'exemplar_id' => $exemplar,
-            'status' => 'PENDENTE',
-        ]);
-        $p->save(false);
-        Yii::$app->session->setFlash('success', 'Pedido enviado!');
-        return $this->redirect(['/meus-emprestimos']);
-    }
-
-    /* ---------- trabalhador/admin ---------- */
-    public function actionPedidos()
-    {
-        $dp = new ActiveDataProvider([
-            'query' => PedidoEmprestimo::find()->where(['status' => 'PENDENTE'])
-                ->with(['usuario', 'exemplar.livro'])
-        ]);
-        return $this->render('pedidos', compact('dp'));
-    }
-
-    public function actionAprovar($id)
-    {
-        $p = PedidoEmprestimo::findOne($id);
-        if (!$p || $p->status !== 'PENDENTE') throw new NotFoundHttpException;
-        $e = new Emprestimos([
-            'exemplar_id' => $p->exemplar_id,
-            'usuario_id' => $p->usuario_id,
-            'data_emprestimo' => date('Y-m-d'),
-            'data_devolucao_prevista' => date('Y-m-d', strtotime('+7 day')),
-        ]);
-        $e->save(false);
-        $p->status = 'APROVADO';
-        $p->save(false);
-        Yii::$app->session->setFlash('success', 'Aprovado!');
-        return $this->redirect(['pedidos']);
-    }
-
-    public function actionDevolver($id)
-    {
-        $emp = Emprestimos::findOne($id);
-        if (!$emp) throw new NotFoundHttpException;
-
-        $form = new EmprestimoForm();
-        if ($form->load(Yii::$app->request->post()) && $form->validate()) {
-            $emp->data_devolucao_real = $form->data_devolucao_real;
-            $atraso = (strtotime($form->data_devolucao_real) -
-                strtotime($emp->data_devolucao_prevista)) / 86400;
-            if ($atraso > 0) $emp->multa_calculada = $atraso * 1.00; // R$1 por dia
-            $emp->save(false);
-            Yii::$app->session->setFlash('success', 'Devolução registrada!');
-            return $this->redirect(['index']);
+        if (Yii::$app->user->isGuest) {
+            return $this->goHome();
         }
-        return $this->render('devolver', compact('emp', 'form'));
+
+        $exemplar = Exemplares::findOne(['livro_id' => $livroId]);
+        if (!$exemplar) {
+            throw new NotFoundHttpException('Exemplar não encontrado.');
+        }
+
+        $model = new Emprestimos();
+        $model->exemplar_id = $exemplar->id;
+
+        if ($model->save(false)) {
+            Yii::$app->session->setFlash('success', 'Empréstimo registrado. Aguardando aprovação.');
+        } else {
+            Yii::$app->session->setFlash('error', 'Falha ao registrar empréstimo.');
+        }
+
+        return $this->redirect(['livros/view', 'id' => $livroId]);
     }
 
+    /**
+     * Lista apenas empréstimos pendentes.
+     */
     public function actionIndex()
     {
-        $dp = new ActiveDataProvider([
-            'query' => Emprestimos::find()->with(['usuario', 'exemplar.livro'])
-                ->orderBy(['data_emprestimo' => SORT_DESC])
+        $query = Emprestimos::find()->where(['status' => 'PENDENTE']);
+        if (!Yii::$app->user->identity->is_trabalhador) {
+            $query->andWhere(['usuario_id' => Yii::$app->user->id]);
+        }
+
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query->orderBy(['data_emprestimo' => SORT_DESC]),
         ]);
-        return $this->render('index', compact('dp'));
+
+        return $this->render('index', [
+            'dataProvider' => $dataProvider,
+        ]);
     }
+
+    /**
+     * Aprova um empréstimo (só trabalhador).
+     * Atualiza status e status do exemplar.
+     */
+    public function actionApprove($id)
+    {
+        if (!Yii::$app->user->identity->is_trabalhador) {
+            throw new ForbiddenHttpException('Você não tem permissão.');
+        }
+
+        $model = Emprestimos::findOne($id);
+        if (!$model) {
+            throw new NotFoundHttpException('Empréstimo não encontrado.');
+        }
+
+        if ($model->status === 'PENDENTE') {
+            $ex = $model->exemplar;
+            $ex->status = 'Emprestado';
+            $ex->save(false);
+
+            $model->status = 'APROVADO';
+            $model->save(false);
+
+            Yii::$app->session->setFlash('success', 'Empréstimo aprovado.');
+        }
+
+        return $this->redirect(['index']);
+    }
+
+    /**
+     * Rejeita um empréstimo (só trabalhador).
+     */
+    public function actionReject($id)
+    {
+        if (!Yii::$app->user->identity->is_trabalhador) {
+            throw new ForbiddenHttpException('Você não tem permissão.');
+        }
+
+        $model = Emprestimos::findOne($id);
+        if (!$model) {
+            throw new NotFoundHttpException('Empréstimo não encontrado.');
+        }
+
+        if ($model->status === 'PENDENTE') {
+            $model->status = 'REJEITADO';
+            $model->save(false);
+            Yii::$app->session->setFlash('info', 'Empréstimo rejeitado.');
+        }
+
+        return $this->redirect(['index']);
+    }
+
+    /**
+     * Lista todo o histórico de empréstimos (sem filtro de status),
+     * mas usuários padrão veem só os próprios, e trabalhadores veem todos.
+     */
+    public function actionHistory()
+    {
+        $query = Emprestimos::find();
+        if (!Yii::$app->user->identity->is_trabalhador) {
+            $query->andWhere(['usuario_id' => Yii::$app->user->id]);
+        }
+
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query->orderBy(['data_emprestimo' => SORT_DESC]),
+        ]);
+
+        return $this->render('history', [
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
 }

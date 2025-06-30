@@ -13,7 +13,7 @@ $this->title                   = $model->titulo;
     <!-- Ações -->
     <div class="mt-6 flex space-x-2">
         <?= Html::a('Editar', ['update', 'id' => $model->id], ['class' => 'form-button form-button-primary']) ?>
-        <?= Html::a('Registrar Compra', ['compras/create', 'livroId' => $model->id], ['class' => 'form-button form-button-primary']) ?>
+        <?= Html::a('Solicitar Venda', ['compras/create', 'livroId' => $model->id], ['class' => 'form-button form-button-primary']) ?>
         <!-- Botão de Favoritos -->
         <?php if (!Yii::$app->user->isGuest): ?>
             <?php $isFav = $model->getFavoritos()
@@ -25,6 +25,11 @@ $this->title                   = $model->titulo;
                 ['class' => 'form-button form-button-secondary']
             ) ?>
         <?php endif; ?>
+        <?= Html::a('Registrar Empréstimo', ['emprestimos/create','livroId' => $model->id], [
+            'class' => 'form-button form-button-primary',
+            'data-method' => 'post',
+        ]) ?>
+
     </div>
 
     <?= DetailView::widget([

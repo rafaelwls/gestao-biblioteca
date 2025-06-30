@@ -25,6 +25,25 @@ class ComprasController extends Controller
         ]);
     }
 
+    /**
+     * Lista todo o histórico de compras (pendentes, aprovadas e rejeitadas).
+     */
+    public function actionHistory()
+    {
+        $query = Compras::find();
+        // usuário comum só vê as próprias
+        if (!Yii::$app->user->identity->is_trabalhador) {
+            $query->andWhere(['usuario_id' => Yii::$app->user->id]);
+        }
+
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query->orderBy(['data_compra' => SORT_DESC]),
+        ]);
+
+        return $this->render('history', [
+            'dataProvider' => $dataProvider,
+        ]);
+    }
 
     public function actionCreate($livroId)
     {
@@ -32,7 +51,7 @@ class ComprasController extends Controller
             return $this->goHome();
         }
 
-        $exemplar = Exemplares::findOne(['livro_id'=>$livroId]);
+        $exemplar = Exemplares::findOne(['livro_id' => $livroId]);
         if (!$exemplar) {
             throw new NotFoundHttpException('Exemplar não encontrado.');
         }
@@ -43,20 +62,20 @@ class ComprasController extends Controller
         if ($model->load(Yii::$app->request->post()) && $model->validate()) {
             $model->status = 'PENDENTE';
             $model->save(false);
-            Yii::$app->session->setFlash('success','Compra registrada. Aguardando aprovação.');
-            return $this->redirect(['livros/view','id'=>$livroId]);
+            Yii::$app->session->setFlash('success', 'Solicitação de venda registrada. Aguardando sua aprovação.');
+            return $this->redirect(['livros/view', 'id' => $livroId]);
         }
 
         return $this->render('create', [
-            'model'=>$model,
-            'exemplar'=>$exemplar,
+            'model' => $model,
+            'exemplar' => $exemplar,
         ]);
     }
 
     public function actionIndex()
     {
         $query = Compras::find();
-         // traz só compras pendentes
+        // traz só compras pendentes
         $query = Compras::find()
             ->where(['status' => 'PENDENTE']);
 
@@ -65,9 +84,9 @@ class ComprasController extends Controller
             $query->andWhere(['usuario_id' => Yii::$app->user->id]);
         }
         $dataProvider = new ActiveDataProvider([
-            'query'=>$query->orderBy(['data_compra'=>SORT_DESC]),
+            'query' => $query->orderBy(['data_compra' => SORT_DESC]),
         ]);
-        return $this->render('index',['dataProvider'=>$dataProvider]);
+        return $this->render('index', ['dataProvider' => $dataProvider]);
     }
 
     public function actionApprove($id)
@@ -76,14 +95,15 @@ class ComprasController extends Controller
             throw new ForbiddenHttpException('Sem permissão.');
         }
         $m = Compras::findOne($id);
-        if (!$m) throw new NotFoundHttpException;
-        if ($m->status==='PENDENTE') {
+        if (!$m)
+            throw new NotFoundHttpException;
+        if ($m->status === 'PENDENTE') {
             $ex = $m->exemplar;
             $ex->quantidade -= $m->quantidade;
             $ex->save(false);
             $m->status = 'APROVADA';
             $m->save(false);
-            Yii::$app->session->setFlash('success','Compra aprovada.');
+            Yii::$app->session->setFlash('success', 'Compra aprovada.');
         }
         return $this->redirect(['index']);
     }
@@ -94,11 +114,12 @@ class ComprasController extends Controller
             throw new ForbiddenHttpException('Sem permissão.');
         }
         $m = Compras::findOne($id);
-        if (!$m) throw new NotFoundHttpException;
-        if ($m->status==='PENDENTE') {
+        if (!$m)
+            throw new NotFoundHttpException;
+        if ($m->status === 'PENDENTE') {
             $m->status = 'REJEITADA';
             $m->save(false);
-            Yii::$app->session->setFlash('info','Compra rejeitada.');
+            Yii::$app->session->setFlash('info', 'Compra rejeitada.');
         }
         return $this->redirect(['index']);
     }
