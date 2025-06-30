@@ -79,6 +79,7 @@ class m250630_000002_seed_data extends Migration
                 'data_aquisicao' => new Expression('CURRENT_DATE'),
                 'status'         => 'disponível',
                 'estado'         => 'novo',
+                'quantidade'     => 3,
                 'codigo_barras'  => 'CB' . str_pad($i, 4, '0', STR_PAD_LEFT),
             ]);
         }

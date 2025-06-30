@@ -91,6 +91,7 @@ CREATE TABLE exemplares (
   data_aquisicao   DATE         NOT NULL DEFAULT CURRENT_DATE,
   status           VARCHAR(20)  NOT NULL,
   estado           VARCHAR(50)  NOT NULL,
+  quantidade       INT          NOT NULL,
   codigo_barras    VARCHAR(50)  UNIQUE,
   data_remocao     DATE,
   motivo_remocao   motivo_remocao
