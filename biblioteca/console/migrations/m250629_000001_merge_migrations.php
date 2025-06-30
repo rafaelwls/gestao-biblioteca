@@ -6,31 +6,8 @@ class m250629_000001_merge_migrations extends Migration
 {
     public function safeUp()
     {
-        // === Migração m130524_201442_init (tabela user) ===
-        $tableOptions = null;
-        if ($this->db->driverName === 'mysql') {
-            $tableOptions = 'CHARACTER SET utf8 COLLATE utf8_unicode_ci ENGINE=InnoDB';
-        }
-        $this->createTable('{{%user}}', [
-            'id'                     => $this->primaryKey(),
-            'username'               => $this->string()->notNull()->unique(),
-            'auth_key'               => $this->string(32)->notNull(),
-            'password_hash'          => $this->string()->notNull(),
-            'password_reset_token'   => $this->string()->unique(),
-            'email'                  => $this->string()->notNull()->unique(),
-            'status'                 => $this->smallInteger()->notNull()->defaultValue(10),
-            'created_at'             => $this->integer()->notNull(),
-            'updated_at'             => $this->integer()->notNull(),
-        ], $tableOptions);
-
-        // === Migração m190124_110200_add_verification_token_column_to_user_table ===
-        $this->addColumn('{{%user}}', 'verification_token', $this->string()->defaultValue(null));
-
-        // === Migração m250621_210455_initial_schema ===
-        // 1) Habilita extensão para gerar UUIDs
+        // === Extensões e ENUMs ===
         $this->execute('CREATE EXTENSION IF NOT EXISTS "pgcrypto";');
-
-        // 2) Cria tipos ENUM
         $this->execute(<<<'SQL'
 CREATE TYPE motivo_remocao AS ENUM (
   'DANIFICADO',
@@ -48,7 +25,27 @@ CREATE TYPE tipo_fluxo AS ENUM (
 SQL
         );
 
-        // 3) Cria tabelas do esquema inicial
+        // === Tabela user (original Yii2) ===
+        $tableOptions = null;
+        if ($this->db->driverName === 'mysql') {
+            $tableOptions = 'CHARACTER SET utf8 COLLATE utf8_unicode_ci ENGINE=InnoDB';
+        }
+        $this->createTable('{{%user}}', [
+            'id'                     => $this->primaryKey(),
+            'username'               => $this->string()->notNull()->unique(),
+            'auth_key'               => $this->string(32)->notNull(),
+            'password_hash'          => $this->string()->notNull(),
+            'password_reset_token'   => $this->string()->unique(),
+            'email'                  => $this->string()->notNull()->unique(),
+            'status'                 => $this->smallInteger()->notNull()->defaultValue(10),
+            'created_at'             => $this->integer()->notNull(),
+            'updated_at'             => $this->integer()->notNull(),
+            'verification_token'     => $this->string()->defaultValue(null),
+        ], $tableOptions);
+
+        // === Esquema da biblioteca ===
+
+        // 1) Usuários
         $this->execute(<<<'SQL'
 CREATE TABLE usuarios (
   id             UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -58,10 +55,16 @@ CREATE TABLE usuarios (
   data_cadastro  DATE         NOT NULL DEFAULT CURRENT_DATE,
   data_validade  DATE,
   is_admin       BOOLEAN      NOT NULL DEFAULT FALSE,
-  is_trabalhador BOOLEAN      NOT NULL DEFAULT FALSE
+  is_trabalhador BOOLEAN      NOT NULL DEFAULT FALSE,
+  senha          VARCHAR(255) NOT NULL DEFAULT '',
+  auth_key       VARCHAR(32)  NOT NULL DEFAULT '',
+  created_at     TIMESTAMP    NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMP    NOT NULL DEFAULT NOW()
 );
 SQL
         );
+
+        // 2) Livros
         $this->execute(<<<'SQL'
 CREATE TABLE livros (
   id              UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -71,10 +74,16 @@ CREATE TABLE livros (
   ano_publicacao  INT,
   idioma          VARCHAR(50),
   paginas         INT,
-  data_criacao    TIMESTAMP    NOT NULL DEFAULT NOW()
+  data_criacao    TIMESTAMP    NOT NULL DEFAULT NOW(),
+  autor           VARCHAR(255),
+  genero          VARCHAR(100),
+  status          VARCHAR(20)  NOT NULL DEFAULT 'Disponível',
+  sinopse         TEXT
 );
 SQL
         );
+
+        // 3) Exemplares
         $this->execute(<<<'SQL'
 CREATE TABLE exemplares (
   id               UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -88,6 +97,8 @@ CREATE TABLE exemplares (
 );
 SQL
         );
+
+        // 4) Empréstimos
         $this->execute(<<<'SQL'
 CREATE TABLE emprestimos (
   id                      UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -96,48 +107,44 @@ CREATE TABLE emprestimos (
   data_emprestimo         DATE         NOT NULL DEFAULT CURRENT_DATE,
   data_devolucao_prevista DATE         NOT NULL,
   data_devolucao_real     DATE,
-  multa_calculada         NUMERIC(8,2) NOT NULL DEFAULT 0.00
+  multa_calculada         NUMERIC(8,2) NOT NULL DEFAULT 0.00,
+  multa_paga              BOOLEAN      NOT NULL DEFAULT FALSE,
+  data_pagamento          TIMESTAMP
 );
 SQL
         );
+
+        // 5) Compras
         $this->execute(<<<'SQL'
 CREATE TABLE compras (
-  id            UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-  usuario_id    UUID         NOT NULL REFERENCES usuarios(id),
-  data_compra   DATE         NOT NULL DEFAULT CURRENT_DATE,
-  valor_total   NUMERIC(12,2) NOT NULL
+  id               UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  usuario_id       UUID         NOT NULL REFERENCES usuarios(id),
+  data_compra      DATE         NOT NULL DEFAULT CURRENT_DATE,
+  valor_total      NUMERIC(12,2) NOT NULL,
+  exemplar_id      UUID         NOT NULL REFERENCES exemplares(id),
+  valor_unitario   NUMERIC(10,2) NOT NULL,
+  quantidade       INT          NOT NULL DEFAULT 1,
+  status           VARCHAR(20)  NOT NULL DEFAULT 'PENDENTE'
 );
 SQL
         );
-        $this->execute(<<<'SQL'
-CREATE TABLE item_compras (
-  compra_id      UUID         NOT NULL REFERENCES compras(id) ON DELETE CASCADE,
-  exemplar_id    UUID         NOT NULL REFERENCES exemplares(id),
-  valor_unitario NUMERIC(10,2) NOT NULL,
-  quantidade     INT          NOT NULL DEFAULT 1,
-  PRIMARY KEY (compra_id, exemplar_id)
-);
-SQL
-        );
+
+        // 6) Vendas
         $this->execute(<<<'SQL'
 CREATE TABLE vendas (
-  id           UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-  usuario_id   UUID         NOT NULL REFERENCES usuarios(id),
-  data_venda   DATE         NOT NULL DEFAULT CURRENT_DATE,
-  valor_total  NUMERIC(12,2) NOT NULL
+  id               UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  usuario_id       UUID         NOT NULL REFERENCES usuarios(id),
+  data_venda       DATE         NOT NULL DEFAULT CURRENT_DATE,
+  valor_total      NUMERIC(12,2) NOT NULL,
+  exemplar_id      UUID         NOT NULL REFERENCES exemplares(id),
+  valor_unitario   NUMERIC(10,2) NOT NULL,
+  quantidade       INT          NOT NULL DEFAULT 1,
+  status           VARCHAR(20)  NOT NULL DEFAULT 'PENDENTE'
 );
 SQL
         );
-        $this->execute(<<<'SQL'
-CREATE TABLE item_vendas (
-  venda_id       UUID         NOT NULL REFERENCES vendas(id) ON DELETE CASCADE,
-  exemplar_id    UUID         NOT NULL REFERENCES exemplares(id),
-  valor_unitario NUMERIC(10,2) NOT NULL,
-  quantidade     INT          NOT NULL DEFAULT 1,
-  PRIMARY KEY (venda_id, exemplar_id)
-);
-SQL
-        );
+
+        // 7) Favoritos
         $this->execute(<<<'SQL'
 CREATE TABLE favoritos (
   id            UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -148,6 +155,8 @@ CREATE TABLE favoritos (
 );
 SQL
         );
+
+        // 8) Fluxo de pessoas
         $this->execute(<<<'SQL'
 CREATE TABLE fluxo_pessoas (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -158,105 +167,56 @@ CREATE TABLE fluxo_pessoas (
 SQL
         );
 
-        // === Migração m250624_231356_add_debt_columns_to_emprestimos ===
-        $this->addColumn('emprestimos', 'multa_paga',     $this->boolean()->notNull()->defaultValue(false));
-        $this->addColumn('emprestimos', 'data_pagamento', $this->timestamp()->null());
-
-        // === Migração m250624_231543_create_pedido_emprestimo_table ===
-        $this->execute('CREATE EXTENSION IF NOT EXISTS "pgcrypto";'); // idempotente
-        $this->createTable('pedido_emprestimo', [
-            'id'               => 'UUID PRIMARY KEY DEFAULT gen_random_uuid()',
-            'usuario_id'       => 'UUID NOT NULL',
-            'exemplar_id'      => 'UUID NOT NULL',
-            'data_solicitacao' => 'TIMESTAMP NOT NULL DEFAULT NOW()',
-            'status'           => "VARCHAR(20) NOT NULL DEFAULT 'PENDENTE'",
-        ]);
-        $this->addForeignKey('fk_pedido_usuario',   'pedido_emprestimo', 'usuario_id',  'usuarios',   'id', 'CASCADE', 'CASCADE');
-        $this->addForeignKey('fk_pedido_exemplar',  'pedido_emprestimo', 'exemplar_id', 'exemplares', 'id', 'CASCADE', 'CASCADE');
-
-        // === Migração m250624_231556_create_doacoes_table ===
+        // 9) Pedido de Empréstimo
         $this->execute('CREATE EXTENSION IF NOT EXISTS "pgcrypto";');
-        $this->createTable('doacoes', [
-            'id'               => 'UUID PRIMARY KEY DEFAULT gen_random_uuid()',
-            'usuario_id'       => 'UUID NOT NULL',
-            'titulo'           => $this->string(255)->notNull(),
-            'autor'            => $this->string(255)->null(),
-            'estado'           => $this->string(50)->null(),
-            'status'           => "VARCHAR(20) NOT NULL DEFAULT 'PENDENTE'",
-            'data_solicitacao' => 'TIMESTAMP NOT NULL DEFAULT NOW()',
-        ]);
-        $this->addForeignKey('fk_doacao_usuario', 'doacoes', 'usuario_id', 'usuarios', 'id', 'CASCADE', 'CASCADE');
+        $this->execute(<<<'SQL'
+CREATE TABLE pedido_emprestimo (
+  id               UUID      PRIMARY KEY DEFAULT gen_random_uuid(),
+  usuario_id       UUID      NOT NULL REFERENCES usuarios(id),
+  exemplar_id      UUID      NOT NULL REFERENCES exemplares(id),
+  data_solicitacao TIMESTAMP NOT NULL DEFAULT NOW(),
+  status           VARCHAR(20) NOT NULL DEFAULT 'PENDENTE'
+);
+SQL
+        );
 
-        // === Migração m250628_162357_add_password_and_authkey_to_usuarios ===
-        $this->addColumn('usuarios', 'senha',     $this->string(255)->notNull()->defaultValue(''));
-        $this->addColumn('usuarios', 'auth_key',  $this->string(32)->notNull()->defaultValue(''));
-
-        // === Migração m250628_162756_add_timestamps_to_usuarios ===
-        $this->addColumn('usuarios', 'created_at', $this->timestamp()->notNull()->defaultExpression('NOW()'));
-        $this->addColumn('usuarios', 'updated_at', $this->timestamp()->notNull()->defaultExpression('NOW()'));
-
-        // === Migração m250628_213842_add_fields_to_livros ===
-        $this->addColumn('livros', 'autor',  $this->string(255));
-        $this->addColumn('livros', 'genero', $this->string(100));
-        $this->addColumn('livros', 'status', $this->string(20)->notNull()->defaultValue('Disponível'));
-        $this->addColumn('livros', 'sinopse',$this->text()->null());
-
-        // === Migração m250628_214647_add_status_to_compras_vendas ===
-        $this->addColumn('compras', 'status', $this->string(20)->notNull()->defaultValue('PENDENTE'));
-        $this->addColumn('vendas',  'status', $this->string(20)->notNull()->defaultValue('PENDENTE'));
+        // 10) Doações
+        $this->execute('CREATE EXTENSION IF NOT EXISTS "pgcrypto";');
+        $this->execute(<<<'SQL'
+CREATE TABLE doacoes (
+  id               UUID      PRIMARY KEY DEFAULT gen_random_uuid(),
+  usuario_id       UUID      NOT NULL REFERENCES usuarios(id),
+  titulo           VARCHAR(255) NOT NULL,
+  autor            VARCHAR(255),
+  estado           VARCHAR(50),
+  status           VARCHAR(20) NOT NULL DEFAULT 'PENDENTE',
+  data_solicitacao TIMESTAMP NOT NULL DEFAULT NOW()
+);
+SQL
+        );
     }
 
     public function safeDown()
     {
         // Reverte em ordem inversa
+        $this->execute('DROP TABLE IF EXISTS doacoes;');
+        $this->execute('DROP TABLE IF EXISTS pedido_emprestimo;');
+        $this->execute('DROP TABLE IF EXISTS fluxo_pessoas;');
+        $this->execute('DROP TABLE IF EXISTS favoritos;');
+        $this->execute('DROP TABLE IF EXISTS vendas;');
+        $this->execute('DROP TABLE IF EXISTS compras;');
+        $this->execute('DROP TABLE IF EXISTS emprestimos;');
+        $this->execute('DROP TABLE IF EXISTS exemplares;');
+        $this->execute('DROP TABLE IF EXISTS livros;');
+        $this->execute('DROP TABLE IF EXISTS usuarios;');
 
-        // últimas alterações de status
-        $this->dropColumn('vendas',  'status');
-        $this->dropColumn('compras', 'status');
-
-        // campos em livros
-        $this->dropColumn('livros', 'sinopse');
-        $this->dropColumn('livros', 'status');
-        $this->dropColumn('livros', 'genero');
-        $this->dropColumn('livros', 'autor');
-
-        // timestamps e auth em usuarios
-        $this->dropColumn('usuarios', 'updated_at');
-        $this->dropColumn('usuarios', 'created_at');
-        $this->dropColumn('usuarios', 'auth_key');
-        $this->dropColumn('usuarios', 'senha');
-
-        // tabela doações
-        $this->dropForeignKey('fk_doacao_usuario', 'doacoes');
-        $this->dropTable('doacoes');
-
-        // tabela pedido_emprestimo
-        $this->dropForeignKey('fk_pedido_exemplar', 'pedido_emprestimo');
-        $this->dropForeignKey('fk_pedido_usuario',   'pedido_emprestimo');
-        $this->dropTable('pedido_emprestimo');
-
-        // colunas de dívida em empréstimos
-        $this->dropColumn('emprestimos', 'data_pagamento');
-        $this->dropColumn('emprestimos', 'multa_paga');
-
-        // esquema inicial (tabelas com UUID)
-        $this->dropTable('fluxo_pessoas');
-        $this->dropTable('favoritos');
-        $this->dropTable('item_vendas');
-        $this->dropTable('vendas');
-        $this->dropTable('item_compras');
-        $this->dropTable('compras');
-        $this->dropTable('emprestimos');
-        $this->dropTable('exemplares');
-        $this->dropTable('livros');
-        $this->dropTable('usuarios');
-
-        // tipos ENUM
-        $this->execute('DROP TYPE IF EXISTS tipo_fluxo;');
-        $this->execute('DROP TYPE IF EXISTS motivo_remocao;');
-
-        // user original
+        // Tabela user original
         $this->dropColumn('{{%user}}', 'verification_token');
         $this->dropTable('{{%user}}');
+
+        // ENUMs e extensão
+        $this->execute('DROP TYPE IF EXISTS tipo_fluxo;');
+        $this->execute('DROP TYPE IF EXISTS motivo_remocao;');
+        $this->execute('DROP EXTENSION IF EXISTS "pgcrypto";');
     }
 }
