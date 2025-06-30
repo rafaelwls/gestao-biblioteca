@@ -1,6 +1,7 @@
 # gestao-biblioteca
 
 Instale o Xampp
+https://www.apachefriends.org/pt_br/index.html
 
 instale o composer ou já tenha baixado:
 ```composer --version```

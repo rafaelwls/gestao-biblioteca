@@ -1,88 +1,71 @@
 <?php
-
 namespace common\models;
 
 use Yii;
+use yii\db\ActiveRecord;
+use common\models\Exemplares;
 
-/**
- * This is the model class for table "compras".
- *
- * @property string $id
- * @property string $usuario_id
- * @property string $data_compra
- * @property float $valor_total
- *
- * @property Exemplares[] $exemplars
- * @property Item_compras[] $itemCompras
- * @property Usuarios $usuario
- */
-class Compras extends \yii\db\ActiveRecord
+class Compras extends ActiveRecord
 {
-
-
-    /**
-     * {@inheritdoc}
-     */
     public static function tableName()
     {
         return 'compras';
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function rules()
     {
         return [
-            [['id', 'usuario_id', 'valor_total'], 'required'],
-            [['id', 'usuario_id'], 'string'],
-            [['data_compra'], 'safe'],
-            [['valor_total'], 'number'],
-            [['id'], 'unique'],
-            [['usuario_id'], 'exist', 'skipOnError' => true, 'targetClass' => Usuarios::class, 'targetAttribute' => ['usuario_id' => 'id']],
+            // campos vindos do form
+            [['quantidade','valor_unitario'], 'required'],
+            ['quantidade', 'integer', 'min' => 1],
+            ['valor_unitario', 'number', 'min' => 0.01],
+
+            // status padrão
+            ['status', 'default', 'value' => 'PENDENTE'],
+            ['status', 'in', 'range'=>['PENDENTE','APROVADA','REJEITADA']],
+
+            // FK exemplar
+            ['exemplar_id','required'],
+            ['exemplar_id','exist','targetClass'=>Exemplares::class,'targetAttribute'=>['exemplar_id'=>'id']],
+
+            // valida disponibilidade
+            ['quantidade','validateAvailable'],
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'usuario_id' => 'Usuario ID',
-            'data_compra' => 'Data Compra',
-            'valor_total' => 'Valor Total',
+            'exemplar_id'    => 'Exemplar',
+            'quantidade'     => 'Quantidade',
+            'valor_unitario' => 'Valor Unitário',
+            'valor_total'    => 'Valor Total',
+            'status'         => 'Status',
+            'data_compra'    => 'Data da Compra',
         ];
     }
 
-    /**
-     * Gets query for [[Exemplars]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getExemplars()
+    public function getExemplar()
     {
-        return $this->hasMany(Exemplares::class, ['id' => 'exemplar_id'])->viaTable('item_compras', ['compra_id' => 'id']);
+        return $this->hasOne(Exemplares::class, ['id'=>'exemplar_id']);
     }
 
-    /**
-     * Gets query for [[ItemCompras]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getItemCompras()
+    public function validateAvailable($attribute)
     {
-        return $this->hasMany(Item_compras::class, ['compra_id' => 'id']);
+        if (!$this->hasErrors() && $this->exemplar) {
+            if ($this->$attribute > $this->exemplar->quantidade) {
+                $this->addError($attribute, "Máximo disponível: {$this->exemplar->quantidade}");
+            }
+        }
     }
 
-    /**
-     * Gets query for [[Usuario]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getUsuario()
+    public function beforeSave($insert)
     {
-        return $this->hasOne(Usuarios::class, ['id' => 'usuario_id']);
+        if ($insert) {
+            $this->valor_total = $this->quantidade * $this->valor_unitario;
+            $this->usuario_id = Yii::$app->user->id;
+            $this->data_compra = date('Y-m-d');
+        }
+        return parent::beforeSave($insert);
     }
 }

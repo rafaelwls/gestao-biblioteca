@@ -29,6 +29,13 @@ class SidebarWidget extends Widget
             'items' => [
                 ['title' => 'Todos os usuários', 'url' => ['/usuarios/index'], 'icon' => '👥'], 
             ],
+        ],
+        [
+            'title' => 'Compras',
+            'icon' => '👥',
+            'items' => [
+                ['title' => 'Aprovar as Compras', 'url' => ['/compras/index'], 'icon' => '👥'], 
+            ],
         ],  
     ];
 

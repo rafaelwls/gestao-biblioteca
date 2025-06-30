@@ -26,7 +26,7 @@ $this->title = 'Criando um novo Livro';
         <div class="px-6 py-4">
             <?= $this->render('_form', [
                 'model'    => $model,
-                'exemplar' => $exemplar, 
+                'exemplar' => $exemplar,
             ]) ?>
         </div>
     </div>

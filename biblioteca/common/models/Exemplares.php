@@ -12,6 +12,7 @@ use Yii;
  * @property string $data_aquisicao
  * @property string $status
  * @property string $estado
+ * @property int $quantidade
  * @property string|null $codigo_barras
  * @property string|null $data_remocao
  * @property string|null $motivo_remocao
@@ -49,11 +50,12 @@ class Exemplares extends \yii\db\ActiveRecord
     {
         return [
             [['codigo_barras', 'data_remocao', 'motivo_remocao'], 'default', 'value' => null],
-            [['id', 'livro_id', 'status', 'estado'], 'required'],
+            [['id', 'livro_id', 'status', 'estado', 'quantidade'], 'required'],
             [['id', 'livro_id', 'motivo_remocao'], 'string'],
             [['data_aquisicao', 'data_remocao'], 'safe'],
             [['status'], 'string', 'max' => 20],
             [['estado', 'codigo_barras'], 'string', 'max' => 50],
+            [['quantidade'], 'integer'],
             ['motivo_remocao', 'in', 'range' => array_keys(self::optsMotivoRemocao())],
             [['codigo_barras'], 'unique'],
             [['id'], 'unique'],
@@ -61,22 +63,25 @@ class Exemplares extends \yii\db\ActiveRecord
         ];
     }
 
+
     /**
      * {@inheritdoc}
-     */
+    */
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'livro_id' => 'Livro ID',
-            'data_aquisicao' => 'Data Aquisicao',
-            'status' => 'Status',
-            'estado' => 'Estado',
-            'codigo_barras' => 'Codigo Barras',
-            'data_remocao' => 'Data Remocao',
-            'motivo_remocao' => 'Motivo Remocao',
+            'id'              => 'ID',
+            'livro_id'        => 'Livro ID',
+            'data_aquisicao'  => 'Data Aquisição',
+            'status'          => 'Status',
+            'estado'          => 'Estado',
+            'codigo_barras'   => 'Código de Barras',
+            'quantidade'      => 'Quantidade',
+            'data_remocao'    => 'Data Remoção',
+            'motivo_remocao'  => 'Motivo Remoção',
         ];
     }
+
 
     /**
      * Gets query for [[Compras]].

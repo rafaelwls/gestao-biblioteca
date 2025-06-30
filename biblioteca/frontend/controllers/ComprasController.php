@@ -4,87 +4,102 @@ namespace frontend\controllers;
 use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use yii\db\Transaction;
-use common\models\Livros;
+use yii\web\ForbiddenHttpException;
 use common\models\Compras;
-use common\models\ItemCompras;
+use common\models\Exemplares;
+use yii\data\ActiveDataProvider;
 
 class ComprasController extends Controller
 {
     /**
-     * Cria uma nova compra para um livro específico.
-     * Rota: /compras/create?livroId=UUID
+     * Exibe os detalhes de uma compra.
      */
+    public function actionView($id)
+    {
+        $model = Compras::findOne($id);
+        if (!$model) {
+            throw new NotFoundHttpException('Compra não encontrada.');
+        }
+        return $this->render('view', [
+            'model' => $model,
+        ]);
+    }
+
+
     public function actionCreate($livroId)
     {
-        // 1) Carrega o livro ou 404
-        $livro = Livros::findOne($livroId);
-        if (!$livro) {
-            throw new NotFoundHttpException("Livro não encontrado: $livroId");
+        if (Yii::$app->user->isGuest) {
+            return $this->goHome();
         }
 
-        // 2) Model da compra
-        $compra = new Compras();
-        $compra->usuario_id = Yii::$app->user->id;
-        // data_compra vem default do DB
+        $exemplar = Exemplares::findOne(['livro_id'=>$livroId]);
+        if (!$exemplar) {
+            throw new NotFoundHttpException('Exemplar não encontrado.');
+        }
 
-        // Campos extras não no model: quantidade e valor_unitario
-        $quantidade     = Yii::$app->request->post('quantidade', 1);
-        $valorUnitario  = Yii::$app->request->post('valor_unitario', '');
+        $model = new Compras();
+        $model->exemplar_id = $exemplar->id;
 
-        if (Yii::$app->request->isPost) {
-            // validações básicas
-            if ($quantidade < 1) {
-                Yii::$app->session->setFlash('error', 'Quantidade deve ser ao menos 1.');
-            } elseif (!is_numeric($valorUnitario) || $valorUnitario <= 0) {
-                Yii::$app->session->setFlash('error', 'Valor unitário inválido.');
-            } else {
-                // Calcula valor_total
-                $compra->valor_total = $quantidade * $valorUnitario;
-
-                $transaction = Yii::$app->db->beginTransaction(Transaction::SERIALIZABLE);
-                try {
-                    if (!$compra->save()) {
-                        throw new \Exception('Falha ao salvar compra');
-                    }
-
-                    // criar exemplares e itens de compra
-                    for ($i = 0; $i < $quantidade; $i++) {
-                        // 1 exemplar
-                        $exemplar = new \common\models\Exemplares();
-                        $exemplar->livro_id       = $livro->id;
-                        $exemplar->status         = 'DISPONÍVEL';
-                        $exemplar->estado         = 'NOVO';
-                        // data_aquisicao default
-                        if (!$exemplar->save()) {
-                            throw new \Exception('Falha ao criar exemplar');
-                        }
-
-                        // item de compra
-                        $item = new ItemCompras();
-                        $item->compra_id      = $compra->id;
-                        $item->exemplar_id    = $exemplar->id;
-                        $item->valor_unitario = $valorUnitario;
-                        $item->quantidade     = 1;
-                        if (!$item->save()) {
-                            throw new \Exception('Falha ao criar item de compra');
-                        }
-                    }
-
-                    $transaction->commit();
-                    return $this->redirect(['livros/view', 'id' => $livro->id]);
-                } catch (\Exception $e) {
-                    $transaction->rollBack();
-                    Yii::$app->session->setFlash('error', $e->getMessage());
-                }
-            }
+        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
+            $model->status = 'PENDENTE';
+            $model->save(false);
+            Yii::$app->session->setFlash('success','Compra registrada. Aguardando aprovação.');
+            return $this->redirect(['livros/view','id'=>$livroId]);
         }
 
         return $this->render('create', [
-            'livro'          => $livro,
-            'compra'         => $compra,
-            'quantidade'     => $quantidade,
-            'valorUnitario'  => $valorUnitario,
+            'model'=>$model,
+            'exemplar'=>$exemplar,
         ]);
+    }
+
+    public function actionIndex()
+    {
+        $query = Compras::find();
+         // traz só compras pendentes
+        $query = Compras::find()
+            ->where(['status' => 'PENDENTE']);
+
+        // se não for trabalhador, limita ao próprio usuário
+        if (!Yii::$app->user->identity->is_trabalhador) {
+            $query->andWhere(['usuario_id' => Yii::$app->user->id]);
+        }
+        $dataProvider = new ActiveDataProvider([
+            'query'=>$query->orderBy(['data_compra'=>SORT_DESC]),
+        ]);
+        return $this->render('index',['dataProvider'=>$dataProvider]);
+    }
+
+    public function actionApprove($id)
+    {
+        if (!Yii::$app->user->identity->is_trabalhador) {
+            throw new ForbiddenHttpException('Sem permissão.');
+        }
+        $m = Compras::findOne($id);
+        if (!$m) throw new NotFoundHttpException;
+        if ($m->status==='PENDENTE') {
+            $ex = $m->exemplar;
+            $ex->quantidade -= $m->quantidade;
+            $ex->save(false);
+            $m->status = 'APROVADA';
+            $m->save(false);
+            Yii::$app->session->setFlash('success','Compra aprovada.');
+        }
+        return $this->redirect(['index']);
+    }
+
+    public function actionReject($id)
+    {
+        if (!Yii::$app->user->identity->is_trabalhador) {
+            throw new ForbiddenHttpException('Sem permissão.');
+        }
+        $m = Compras::findOne($id);
+        if (!$m) throw new NotFoundHttpException;
+        if ($m->status==='PENDENTE') {
+            $m->status = 'REJEITADA';
+            $m->save(false);
+            Yii::$app->session->setFlash('info','Compra rejeitada.');
+        }
+        return $this->redirect(['index']);
     }
 }

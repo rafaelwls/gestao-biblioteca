@@ -7,12 +7,67 @@ use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use common\models\Livros;
 use common\models\Favoritos;
-use yii\web\Response;  
+use yii\web\Response;
 use yii\web\ForbiddenHttpException;
-use yii\web\NotFoundHttpException; 
+use yii\web\NotFoundHttpException;
+
+use common\models\Exemplares;
 
 class LivrosController extends Controller
 {
+    public function actionCreate()
+    {
+        $model = new Livros();
+        $exemplar = new Exemplares();
+        $post = Yii::$app->request->post();
+
+        if (
+            $model->load($post) &&
+            $exemplar->load($post) &&
+            $model->validate() &&
+            $exemplar->validate(['quantidade', 'estado', 'codigo_barras', 'data_aquisicao'])
+        ) {
+            $transaction = Yii::$app->db->beginTransaction();
+            try {
+                // salva todos os atributos do livro
+                $model->save(false);
+
+                // preenche e salva o exemplar
+                $exemplar->livro_id = $model->id;
+                $exemplar->status = $model->status;
+                $exemplar->save(false);
+
+                $transaction->commit();
+                return $this->redirect(['index']);
+            } catch (\yii\db\IntegrityException $e) {
+                $transaction->rollBack();
+                // tratamento de erro igual ao já implementado...
+            } catch (\Exception $e) {
+                $transaction->rollBack();
+                // tratamento genérico...
+            }
+        }
+
+        return $this->render('//livro/create', [
+            'model' => $model,
+            'exemplar' => $exemplar,
+        ]);
+    }
+
+
+    public function actionView($id)
+    {
+        $model = Livros::findOne($id);
+        if (!$model) {
+            throw new NotFoundHttpException('Livro não encontrado.');
+        }
+        // renderiza view em views/livros/view.php
+        return $this->render('//livro/view', [
+            'model' => $model,
+        ]);
+    }
+
+
     /**
      * Aplica controle de acesso: só usuários logados podem ver a lista de favoritos
      */
@@ -22,16 +77,13 @@ class LivrosController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                // passe a aplicar a regra também em delete:
                 'only' => ['favoritos', 'delete'],
                 'rules' => [
-                    // favoritos continua como antes…
                     [
                         'actions' => ['favoritos'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
-                    // delete só para admin ou trabalhador
                     [
                         'actions' => ['delete'],
                         'allow' => true,
@@ -67,7 +119,7 @@ class LivrosController extends Controller
     /**
      * Cria um novo Livro.
      */
-public function actionFavoritos()
+    public function actionFavoritos()
     {
         $userId = Yii::$app->user->id;
 
@@ -84,14 +136,13 @@ public function actionFavoritos()
                 'pageSize' => 10,
             ],
             'sort' => [
-                // usa o nome do atributo virtual "data_favorito"
                 'defaultOrder' => ['data_favorito' => SORT_DESC],
                 'attributes' => [
                     'titulo',
                     'data_favorito' => [
-                        'asc'  => ['f.data_favorito' => SORT_ASC],
+                        'asc' => ['f.data_favorito' => SORT_ASC],
                         'desc' => ['f.data_favorito' => SORT_DESC],
-                        'label'=> 'Data de Favorito',
+                        'label' => 'Data de Favorito',
                     ],
                 ],
             ],
@@ -104,9 +155,6 @@ public function actionFavoritos()
     /**
      * Adiciona ou remove o livro dos favoritos do usuário logado
      */
-    /**
- * Adiciona ou remove o livro dos favoritos do usuário logado
- */
     public function actionToggleFavorite($id)
     {
         $userId = Yii::$app->user->id;
@@ -119,7 +167,7 @@ public function actionFavoritos()
         } else {
             $new = new Favoritos();
             $new->usuario_id = $userId;
-            $new->livro_id   = $id;
+            $new->livro_id = $id;
             $new->save(false);
             Yii::$app->session->setFlash('success', 'Livro adicionado aos favoritos.');
         }
@@ -181,24 +229,6 @@ public function actionFavoritos()
         ]);
     }
 
-    /**
-     * Exibe os detalhes de um Livro.
-     *
-     * @param string $id
-     * @return string
-     * @throws NotFoundHttpException
-     */
-    public function actionView($id)
-    {
-        $model = Livros::findOne($id);
-        if (!$model) {
-            throw new NotFoundHttpException('Livro não encontrado.');
-        }
-        // como suas views estão em views/livro/
-        return $this->render('//livro/view', [
-            'model' => $model,
-        ]);
-    }
 
 
 }

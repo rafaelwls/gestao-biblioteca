@@ -34,13 +34,13 @@ class LivrosController extends Controller
             'rules' => [
                 // qualquer usuário autenticado pode criar (pedido ou doação)
                 [
-                    'allow'   => true,
+                    'allow' => true,
                     'actions' => ['create'],
-                    'roles'   => ['@'],
+                    'roles' => ['@'],
                 ],
                 // só trabalhador/admin pode index/view/update/delete/resposta/aprovar
                 [
-                    'allow'   => true,
+                    'allow' => true,
                     'actions' => ['index', 'view', 'update', 'delete', 'resposta', 'aprovar'],
                     'matchCallback' => function ($rule, $action) {
                         /** @var \common\models\Usuarios $u */
@@ -53,11 +53,11 @@ class LivrosController extends Controller
 
         // 3) VerbFilter para métodos HTTP
         $behaviors['verbs'] = [
-            'class'   => VerbFilter::class,
+            'class' => VerbFilter::class,
             'actions' => [
-                'delete'   => ['POST'],
+                'delete' => ['POST'],
                 'resposta' => ['POST'],
-                'aprovar'  => ['POST'],
+                'aprovar' => ['POST'],
             ],
         ];
 
@@ -88,10 +88,16 @@ class LivrosController extends Controller
      */
     public function actionView($id)
     {
+        $model = Livros::findOne($id);
+        if (!$model) {
+            throw new NotFoundHttpException('Livro não encontrado.');
+        }
+        // renderiza view em views/livros/view.php
         return $this->render('view', [
-            'model' => $this->findModel($id),
+            'model' => $model,
         ]);
     }
+
 
     /**
      * Creates a new Livros model.
@@ -101,19 +107,43 @@ class LivrosController extends Controller
     public function actionCreate()
     {
         $model = new Livros();
+        $exemplar = new Exemplares();
+        $post = Yii::$app->request->post();
 
-        if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+        if (
+            $model->load($post) &&
+            $exemplar->load($post) &&
+            $model->validate() &&
+            $exemplar->validate(['quantidade', 'estado', 'codigo_barras', 'data_aquisicao'])
+        ) {
+            $transaction = Yii::$app->db->beginTransaction();
+            try {
+                // salva todos os atributos do livro
+                $model->save(false);
+
+                // preenche e salva o exemplar
+                $exemplar->livro_id = $model->id;
+                $exemplar->status = $model->status;
+                $exemplar->save(false);
+
+                $transaction->commit();
+                return $this->redirect(['index']);
+            } catch (\yii\db\IntegrityException $e) {
+                $transaction->rollBack();
+                // tratamento de erro igual ao já implementado...
+            } catch (\Exception $e) {
+                $transaction->rollBack();
+                // tratamento genérico...
             }
-        } else {
-            $model->loadDefaultValues();
         }
 
-        return $this->render('create', [
+        return $this->render('//livro/create', [
             'model' => $model,
+            'exemplar' => $exemplar,
         ]);
     }
+
+
 
     /**
      * Updates an existing Livros model.
@@ -127,7 +157,7 @@ class LivrosController extends Controller
         $model = $this->findModel($id);
 
         if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+            return $this->redirect(['//livro/view', 'id' => $model->id]);
         }
 
         return $this->render('update', [
