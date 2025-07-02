@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="frontend\tests\bootstrap.php" 
+         colors="true"
+         verbose="true"
+         stopOnFailure="false">
+  <testsuites>
+    <testsuite name="unit">
+      <directory suffix="Test.php">frontend/tests/unit/models</directory>
+    </testsuite>
+  </testsuites>
+  <php>
+    <env name="YII_ENV" value="test"/>
+    <env name="YII_DEBUG" value="true"/>
+    <env name="DB_DSN" value="pgsql:host=localhost;port=5432;dbname=biblioteca"/>
+    <env name="DB_USER" value="postgres"/>
+    <env name="DB_PASS" value="123"/>
+  </php>
+</phpunit>

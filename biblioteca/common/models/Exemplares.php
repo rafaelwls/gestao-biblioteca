@@ -3,6 +3,7 @@
 namespace common\models;
 
 use Yii;
+use yii\db\Expression;
 
 /**
  * This is the model class for table "exemplares".
@@ -18,9 +19,7 @@ use Yii;
  * @property string|null $motivo_remocao
  *
  * @property Compras[] $compras
- * @property Emprestimos[] $emprestimos
- * @property ItemCompras[] $itemCompras
- * @property ItemVendas[] $itemVendas
+ * @property Emprestimos[] $emprestimos 
  * @property Livros $livro
  * @property Vendas[] $vendas
  */
@@ -64,6 +63,17 @@ class Exemplares extends \yii\db\ActiveRecord
     }
 
 
+       /**
+     * Marca o exemplar como removido, grava o motivo e a data de remoção.
+     *
+     * @param string $motivo Um dos valores ENUM (DANIFICADO, DESATUALIZADO, OUTRO, PERDIDO)
+     */
+    public function remover(string $motivo): void
+    {
+        $this->status        = 'removido';
+        $this->motivo_remocao = $motivo;
+        $this->data_remocao   = new Expression('NOW()');
+    }
     /**
      * {@inheritdoc}
     */

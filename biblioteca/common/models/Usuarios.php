@@ -39,12 +39,12 @@ class Usuarios extends \yii\db\ActiveRecord implements IdentityInterface
     {
         return [
             [
-                'class'              => TimestampBehavior::class,
+                'class' => TimestampBehavior::class,
                 // preenche data_cadastro ao inserir
                 'createdAtAttribute' => 'data_cadastro',
                 // não usamos coluna updated_at
                 'updatedAtAttribute' => false,
-                'value'              => new Expression('CURRENT_TIMESTAMP'),
+                'value' => new Expression('CURRENT_TIMESTAMP'),
             ],
         ];
     }
@@ -68,13 +68,13 @@ class Usuarios extends \yii\db\ActiveRecord implements IdentityInterface
     public function attributeLabels()
     {
         return [
-            'nome'           => 'Nome',
-            'sobrenome'      => 'Sobrenome',
-            'email'          => 'E-mail',
-            'senha'          => 'Senha',
-            'data_cadastro'  => 'Data de Cadastro',
-            'data_validade'  => 'Data de Validade',
-            'is_admin'       => 'Administrador?',
+            'nome' => 'Nome',
+            'sobrenome' => 'Sobrenome',
+            'email' => 'E-mail',
+            'senha' => 'Senha',
+            'data_cadastro' => 'Data de Cadastro',
+            'data_validade' => 'Data de Validade',
+            'is_admin' => 'Administrador?',
             'is_trabalhador' => 'Trabalhador?',
         ];
     }
@@ -94,6 +94,16 @@ class Usuarios extends \yii\db\ActiveRecord implements IdentityInterface
     {
         // se você quiser permitir busca via token JWT puro
         return static::findOne(['auth_key' => $token]);
+    }
+
+    /**
+     * Retorna o nome completo do usuário (nome + sobrenome).
+     *
+     * @return string
+     */
+    public function getFullName(): string
+    {
+        return trim($this->nome . ' ' . $this->sobrenome);
     }
 
     /** {@inheritdoc} */
@@ -237,7 +247,7 @@ class Usuarios extends \yii\db\ActiveRecord implements IdentityInterface
      */
     public function isAdmin(): bool
     {
-        return (bool)$this->is_admin;
+        return (bool) $this->is_admin;
     }
 
     /**
@@ -245,7 +255,7 @@ class Usuarios extends \yii\db\ActiveRecord implements IdentityInterface
      */
     public function isTrabalhador(): bool
     {
-        return (bool)$this->is_trabalhador;
+        return (bool) $this->is_trabalhador;
     }
 
     /**

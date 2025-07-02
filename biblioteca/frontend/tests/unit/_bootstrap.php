@@ -1,16 +1,9 @@
 <?php
-/**
- * Here you can initialize variables via \Codeception\Util\Fixtures class
- * to store data in global array and use it in Tests.
- *
- * ```php
- * // Here _bootstrap.php
- * \Codeception\Util\Fixtures::add('user1', ['name' => 'davert']);
- * ```
- *
- * In Tests
- *
- * ```php
- * \Codeception\Util\Fixtures::get('user1');
- * ```
- */
+defined('YII_ENV')   or define('YII_ENV', 'test');
+defined('YII_DEBUG') or define('YII_DEBUG', true);
+
+require __DIR__ . '/../../vendor/autoload.php';
+require __DIR__ . '/../../vendor/yiisoft/yii2/Yii.php';
+
+$dbConfig = require __DIR__ . '/../../config/test_db.php';
+(new yii\db\Connection($dbConfig))->open();
